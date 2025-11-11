@@ -4,7 +4,7 @@ import Login from '../pages/Login';
 import Signup from '../pages/Signup';
 import { useAuth } from '../contexts/AuthContext';
 import AppShell from '../components/shell/AppShell';
-import ClickupHome from './ClickupHome';
+import EagleEyeHome from './EagleEyeHome';
 import TestLogin from '../pages/TestLogin';
 
 const PrivateRoute = ({ children }: { children: ReactNode }) => {
@@ -12,7 +12,7 @@ const PrivateRoute = ({ children }: { children: ReactNode }) => {
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
 };
 
-const ClickupApp = () => {
+const EagleEyeApp = () => {
   return (
     <Router>
       <Routes>
@@ -24,7 +24,7 @@ const ClickupApp = () => {
           element={
             <PrivateRoute>
               <AppShell>
-                <ClickupHome />
+                <EagleEyeHome />
               </AppShell>
             </PrivateRoute>
           }
@@ -35,6 +35,6 @@ const ClickupApp = () => {
   );
 };
 
-export default ClickupApp;
+export default EagleEyeApp;
 
 

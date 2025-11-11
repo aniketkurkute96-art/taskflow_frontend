@@ -13,8 +13,8 @@ import TaskEdit from './pages/TaskEdit';
 import AdminTemplates from './pages/AdminTemplates';
 import AdminPanel from './pages/AdminPanel';
 import TestLogin from './pages/TestLogin';
-import { isClickupUIEnabled } from './lib/featureFlags';
-import ClickupApp from './clickup/ClickupApp';
+import { isEagleEyeUIEnabled } from './lib/featureFlags';
+import EagleEyeApp from './eagleeye/EagleEyeApp';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -29,12 +29,12 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 function App() {
-  const enableClickupUI = isClickupUIEnabled();
+  const enableEagleEyeUI = isEagleEyeUIEnabled();
 
   return (
     <AuthProvider>
-      {enableClickupUI ? (
-        <ClickupApp />
+      {enableEagleEyeUI ? (
+        <EagleEyeApp />
       ) : (
         <Router>
           <Routes>

@@ -1,4 +1,4 @@
-export const isClickupUIEnabled = (): boolean =>
-  import.meta.env.VITE_ENABLE_CLICKUP_UI === 'true';
+export const isEagleEyeUIEnabled = (): boolean =>
+  import.meta.env.VITE_ENABLE_EAGLEEYE_UI === 'true';
 
 
