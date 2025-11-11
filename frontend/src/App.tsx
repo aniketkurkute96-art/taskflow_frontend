@@ -8,6 +8,7 @@ import TaskCreate from './pages/TaskCreate';
 import TaskDetail from './pages/TaskDetail';
 import AdminTemplates from './pages/AdminTemplates';
 import AdminPanel from './pages/AdminPanel';
+import TestLogin from './pages/TestLogin';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -28,6 +29,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/test-login" element={<TestLogin />} />
           <Route
             path="/dashboard"
             element={
