@@ -44,6 +44,12 @@ interface Attachment {
   createdAt: string;
 }
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
 const TaskDetailNew = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -57,12 +63,19 @@ const TaskDetailNew = () => {
   
   const [newComment, setNewComment] = useState('');
   const [commentLoading, setCommentLoading] = useState(false);
+  
+  // Forward task state
+  const [users, setUsers] = useState<User[]>([]);
+  const [showForwardDialog, setShowForwardDialog] = useState(false);
+  const [selectedUser, setSelectedUser] = useState('');
+  const [forwardLoading, setForwardLoading] = useState(false);
 
   useEffect(() => {
     fetchTask();
     fetchComments();
     fetchActivityLogs();
     fetchAttachments();
+    fetchUsers();
   }, [id]);
 
   const fetchTask = async () => {
@@ -101,6 +114,48 @@ const TaskDetailNew = () => {
       setAttachments(response.data);
     } catch (error) {
       console.error('Error fetching attachments:', error);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const response = await api.get('/users');
+      setUsers(response.data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  const handleForward = async () => {
+    if (!selectedUser) {
+      alert('Please select a user to forward to');
+      return;
+    }
+
+    setForwardLoading(true);
+    try {
+      await api.post(`/tasks/${id}/forward`, { toUserId: selectedUser });
+      setShowForwardDialog(false);
+      setSelectedUser('');
+      fetchTask();
+      fetchActivityLogs();
+      alert('Task forwarded successfully!');
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Failed to forward task');
+    } finally {
+      setForwardLoading(false);
+    }
+  };
+
+  const handleActionChange = (action: string) => {
+    if (action === 'forward') {
+      setShowForwardDialog(true);
+    } else if (action === 'submit') {
+      handleComplete();
+    } else if (action === 'in_progress') {
+      handleStatusChange('in_progress');
+    } else if (action === 'open') {
+      handleStatusChange('open');
     }
   };
 
@@ -308,35 +363,31 @@ const TaskDetailNew = () => {
               </div>
             )}
 
-            {/* Action Buttons */}
+            {/* Action Dropdown */}
             {isAssignee && ['open', 'in_progress'].includes(task.status) && (
               <div className="bg-white shadow rounded-lg p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
-                <div className="flex space-x-3">
-                  {task.status === 'open' && (
-                    <button
-                      onClick={() => handleStatusChange('in_progress')}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                    >
-                      Start Task
-                    </button>
-                  )}
-                  {task.status === 'in_progress' && (
-                    <>
-                      <button
-                        onClick={handleComplete}
-                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-                      >
-                        Submit for Approval
-                      </button>
-                      <button
-                        onClick={() => handleStatusChange('open')}
-                        className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-                      >
-                        Cancel Work
-                      </button>
-                    </>
-                  )}
+                <div className="space-y-3">
+                  <select
+                    onChange={(e) => {
+                      handleActionChange(e.target.value);
+                      e.target.value = ''; // Reset dropdown
+                    }}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-gray-700"
+                    defaultValue=""
+                  >
+                    <option value="" disabled>Select an action...</option>
+                    {task.status === 'open' && (
+                      <option value="in_progress">Start Task</option>
+                    )}
+                    {task.status === 'in_progress' && (
+                      <>
+                        <option value="submit">Submit for Approval</option>
+                        <option value="forward">Forward Task to Another User</option>
+                        <option value="open">Cancel Work</option>
+                      </>
+                    )}
+                  </select>
                 </div>
               </div>
             )}
@@ -403,6 +454,55 @@ const TaskDetailNew = () => {
             </div>
           </div>
         </div>
+
+        {/* Forward Task Dialog */}
+        {showForwardDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Forward Task</h3>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select User to Forward To
+                </label>
+                <select
+                  value={selectedUser}
+                  onChange={(e) => setSelectedUser(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="">Choose a user...</option>
+                  {users
+                    .filter((u) => u.id !== user?.id) // Don't show current user
+                    .map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} ({u.email})
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    setShowForwardDialog(false);
+                    setSelectedUser('');
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  disabled={forwardLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleForward}
+                  disabled={forwardLoading || !selectedUser}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {forwardLoading ? 'Forwarding...' : 'Forward Task'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
