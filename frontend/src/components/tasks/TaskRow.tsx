@@ -175,7 +175,7 @@ const TaskRow = ({ task, columns }: TaskRowProps) => {
   return (
     <div
       onClick={handleClick}
-      className="flex items-center border-b border-slate-200 bg-white px-6 py-3 transition-colors hover:bg-slate-50 cursor-pointer dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700/50"
+      className="flex items-center border-b border-slate-200 bg-white px-4 py-2.5 transition-colors hover:bg-slate-50 cursor-pointer dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700/50"
     >
       {columns.map((column) => (
         <div

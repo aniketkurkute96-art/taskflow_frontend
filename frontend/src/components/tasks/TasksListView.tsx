@@ -3,7 +3,6 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { useColumnStore } from '../../stores/columnStore';
 import { useFilterStore } from '../../stores/filterStore';
 import TasksToolbar from './TasksToolbar';
-import ColumnsMenu from './ColumnsMenu';
 import TaskRow from './TaskRow';
 import api from '../../services/api';
 
@@ -33,11 +32,14 @@ interface User {
   email: string;
 }
 
-const TasksListView = () => {
+interface TasksListViewProps {
+  showColumnsButton?: boolean;
+}
+
+const TasksListView = ({ showColumnsButton = true }: TasksListViewProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showColumnsMenu, setShowColumnsMenu] = useState(false);
 
   const { columns } = useColumnStore();
   const filters = useFilterStore();
@@ -150,17 +152,12 @@ const TasksListView = () => {
     <div className="flex h-full flex-col bg-slate-50 dark:bg-slate-900">
       <TasksToolbar
         users={users}
-        onColumnsClick={() => setShowColumnsMenu(true)}
-      />
-
-      <ColumnsMenu
-        isOpen={showColumnsMenu}
-        onClose={() => setShowColumnsMenu(false)}
+        showColumnsButton={showColumnsButton}
       />
 
       {/* Table Header */}
       <div className="border-b border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
-        <div className="flex items-center px-6 py-3">
+        <div className="flex items-center px-4 py-2.5">
           {visibleColumns.map((column) => (
             <div
               key={column.key}
@@ -236,7 +233,7 @@ const TasksListView = () => {
       </div>
 
       {/* Footer with count */}
-      <div className="border-t border-slate-200 bg-white px-6 py-2 dark:border-slate-700 dark:bg-slate-800">
+      <div className="border-t border-slate-200 bg-white px-4 py-2 dark:border-slate-700 dark:bg-slate-800">
         <p className="text-sm text-slate-600 dark:text-slate-400">
           Showing {filteredTasks.length} of {tasks.length} tasks
         </p>

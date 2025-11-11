@@ -17,7 +17,7 @@ const AppShell = ({ header, sidebar, children }: AppShellProps) => {
         ) : null}
         <div className="flex min-h-screen flex-1 flex-col">
           <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:border-slate-700 dark:bg-slate-900/80">
-            <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+            <div className="flex w-full items-center justify-between px-4 py-3">
               {header ?? (
                 <div className="text-sm font-semibold text-slate-600 dark:text-slate-300">
                   Nagrik TaskFlow
@@ -25,10 +25,8 @@ const AppShell = ({ header, sidebar, children }: AppShellProps) => {
               )}
             </div>
           </header>
-          <main className="flex-1">
-            <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-              {children}
-            </div>
+          <main className="flex-1 overflow-hidden">
+            {children}
           </main>
         </div>
       </div>

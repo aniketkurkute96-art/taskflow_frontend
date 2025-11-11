@@ -6,7 +6,7 @@ import type { TaskFlag } from '../../types/task';
 
 interface TasksToolbarProps {
   users: Array<{ id: string; name: string; email: string }>;
-  onColumnsClick: () => void;
+  showColumnsButton?: boolean;
 }
 
 const TASK_STATUSES = [
@@ -25,7 +25,7 @@ const FLAG_LABELS: Record<TaskFlag, { label: string; icon: string }> = {
   INTERNAL_WAIT: { label: 'Internal Wait', icon: '🕒' },
 };
 
-const TasksToolbar = ({ users, onColumnsClick }: TasksToolbarProps) => {
+const TasksToolbar = ({ users, showColumnsButton = true }: TasksToolbarProps) => {
   const {
     searchQuery,
     setSearchQuery,
@@ -56,8 +56,8 @@ const TasksToolbar = ({ users, onColumnsClick }: TasksToolbarProps) => {
     (dueDateFrom || dueDateTo ? 1 : 0);
 
   return (
-    <div className="border-b border-slate-200 bg-white px-6 py-3 dark:border-slate-700 dark:bg-slate-900">
-      <div className="flex flex-wrap items-center gap-3">
+    <div className="border-b border-slate-200 bg-white px-4 py-2.5 dark:border-slate-700 dark:bg-slate-900">
+      <div className="flex flex-wrap items-center gap-2">
         {/* Search */}
         <div className="relative flex-1 min-w-[200px]">
           <input
@@ -237,34 +237,24 @@ const TasksToolbar = ({ users, onColumnsClick }: TasksToolbarProps) => {
         </div>
 
         {/* Date Filters */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 dark:border-slate-600 dark:bg-slate-800">
+          <svg className="h-4 w-4 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
           <input
             type="date"
             value={startDateFrom || ''}
             onChange={(e) => setStartDateRange(e.target.value || null, startDateTo)}
-            placeholder="Start from"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
+            className="w-[130px] border-0 bg-transparent px-1 py-0.5 text-sm focus:outline-none focus:ring-0 dark:text-slate-100 [color-scheme:light] dark:[color-scheme:dark]"
           />
-          <span className="text-slate-400">→</span>
+          <span className="text-slate-400 text-sm">→</span>
           <input
             type="date"
             value={dueDateTo || ''}
             onChange={(e) => setDueDateRange(dueDateFrom, e.target.value || null)}
-            placeholder="Due by"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
+            className="w-[130px] border-0 bg-transparent px-1 py-0.5 text-sm focus:outline-none focus:ring-0 dark:text-slate-100 [color-scheme:light] dark:[color-scheme:dark]"
           />
         </div>
-
-        {/* Columns Button */}
-        <button
-          onClick={onColumnsClick}
-          className="flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-          Columns
-        </button>
 
         {/* Clear Filters */}
         {activeFilterCount > 0 && (
