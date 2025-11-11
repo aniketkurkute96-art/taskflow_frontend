@@ -8,6 +8,7 @@ import TaskCreate from './pages/TaskCreate';
 import TaskDetail from './pages/TaskDetail';
 import TaskCreateNew from './pages/TaskCreateNew';
 import TaskDetailNew from './pages/TaskDetailNew';
+import TaskEdit from './pages/TaskEdit';
 import AdminTemplates from './pages/AdminTemplates';
 import AdminPanel from './pages/AdminPanel';
 import TestLogin from './pages/TestLogin';
@@ -61,6 +62,14 @@ function App() {
             element={
               <PrivateRoute>
                 <TaskDetailNew />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/tasks/:id/edit"
+            element={
+              <PrivateRoute>
+                <TaskEdit />
               </PrivateRoute>
             }
           />
