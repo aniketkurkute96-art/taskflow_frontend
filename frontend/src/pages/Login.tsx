@@ -100,15 +100,19 @@ const Login = () => {
           </div>
 
           <div className="text-sm text-gray-600 border-t pt-4">
-            <p className="font-semibold">Test Accounts:</p>
-            <ul className="list-disc list-inside mt-1 space-y-1">
-              <li>admin@example.com</li>
+            <p className="font-semibold mb-2">Admin Account:</p>
+            <div className="bg-indigo-50 p-3 rounded-md mb-3">
+              <p className="font-mono text-sm">📧 admin@example.com</p>
+              <p className="font-mono text-sm">🔒 pass-word</p>
+            </div>
+            <p className="font-semibold mb-1">Test Accounts:</p>
+            <ul className="list-disc list-inside space-y-1">
               <li>creator@example.com</li>
               <li>hod@example.com</li>
               <li>cfo@example.com</li>
               <li>assignee@example.com</li>
             </ul>
-            <p className="mt-2">Password: password</p>
+            <p className="mt-2 text-xs">Password for test accounts: password</p>
           </div>
         </form>
       </div>
