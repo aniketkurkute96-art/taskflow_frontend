@@ -10,11 +10,19 @@ import WaitingOn from '../pages/WaitingOn';
 import TaskDetailNew from '../pages/TaskDetailNew';
 import TaskCreateNew from '../pages/TaskCreateNew';
 import TaskEdit from '../pages/TaskEdit';
+import AdminPanel from '../pages/AdminPanel';
 import TestLogin from '../pages/TestLogin';
 
 const PrivateRoute = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated } = useAuth();
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
+};
+
+const AdminRoute = ({ children }: { children: ReactNode }) => {
+  const { isAuthenticated, user } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" />;
+  if (user?.role !== 'admin') return <Navigate to="/workspace" />;
+  return <>{children}</>;
 };
 
 const EagleEyeApp = () => {
@@ -82,6 +90,16 @@ const EagleEyeApp = () => {
                 <TaskEdit />
               </AppShell>
             </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <AdminRoute>
+              <AppShell>
+                <AdminPanel />
+              </AppShell>
+            </AdminRoute>
           }
         />
         <Route path="*" element={<Navigate to="/workspace" replace />} />

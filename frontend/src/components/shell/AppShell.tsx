@@ -90,6 +90,20 @@ const AppShell = ({ header, sidebar, children }: AppShellProps) => {
                         </p>
                       </div>
                       <div className="p-2">
+                        {user?.role === 'admin' && (
+                          <button
+                            onClick={() => {
+                              setShowUserMenu(false);
+                              navigate('/admin/users');
+                            }}
+                            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                            Manage Users
+                          </button>
+                        )}
                         <button
                           onClick={handleLogout}
                           className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-700 transition hover:bg-rose-50 hover:text-rose-600 dark:text-slate-300 dark:hover:bg-rose-900/20 dark:hover:text-rose-400"
