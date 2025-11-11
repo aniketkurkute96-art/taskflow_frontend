@@ -7,6 +7,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  departmentId?: string | null;
 }
 
 interface Department {
@@ -108,14 +109,31 @@ const TaskCreateNew = () => {
     fetchData();
   }, []);
 
+  const filteredAssignees = useMemo(() => {
+    if (!formData.departmentId) return users;
+    return users.filter((candidate) => candidate.departmentId === formData.departmentId);
+  }, [users, formData.departmentId]);
+
   const handleInputChange = (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = event.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => {
+      const next = {
+        ...prev,
+        [name]: value,
+      };
+
+      if (name === 'departmentId') {
+        const present = users.find((candidate) => candidate.id === prev.assigneeId);
+        const departmentMatches = present?.departmentId === value || value === '';
+        if (!departmentMatches) {
+          next.assigneeId = '';
+        }
+      }
+
+      return next;
+    });
   };
 
   const toggleWeekday = (weekday: string) => {
@@ -339,9 +357,14 @@ const TaskCreateNew = () => {
                     className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                   >
                     <option value="">Select teammate…</option>
-                    {users.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.name} ({user.email})
+                    {filteredAssignees.length === 0 && formData.departmentId && (
+                      <option disabled value="">
+                        No users in selected department
+                      </option>
+                    )}
+                    {filteredAssignees.map((candidate) => (
+                      <option key={candidate.id} value={candidate.id}>
+                        {candidate.name} ({candidate.email})
                       </option>
                     ))}
                   </select>
@@ -363,6 +386,29 @@ const TaskCreateNew = () => {
                         {department.name}
                       </option>
                     ))}
+                  </select>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+                    Approval Type
+                  </label>
+                  <select
+                    name="approvalType"
+                    value={formData.approvalType}
+                    onChange={(event) => {
+                      handleInputChange(event);
+                      if (event.target.value !== 'specific') {
+                        setManualApprovers([]);
+                      }
+                    }}
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                  >
+                    <option value="360">360° approval (auto route)</option>
+                    <option value="specific">Specific approvers</option>
+                    <option value="predefined" disabled>
+                      Predefined template (coming soon)
+                    </option>
                   </select>
                 </div>
 
@@ -714,29 +760,6 @@ const TaskCreateNew = () => {
 
           <SectionCard title="Approvals Workflow">
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-                  Approval Type
-                </label>
-                <select
-                  name="approvalType"
-                  value={formData.approvalType}
-                  onChange={(event) => {
-                    handleInputChange(event);
-                    if (event.target.value !== 'specific') {
-                      setManualApprovers([]);
-                    }
-                  }}
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                >
-                  <option value="360">360° approval (auto route)</option>
-                  <option value="specific">Specific approvers</option>
-                  <option value="predefined" disabled>
-                    Predefined template (coming soon)
-                  </option>
-                </select>
-              </div>
-
               {formData.approvalType === 'specific' && (
                 <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 dark:border-indigo-800/40 dark:bg-indigo-900/20">
                   <div className="flex items-start justify-between gap-4">
