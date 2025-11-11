@@ -3,8 +3,11 @@ import axios from 'axios';
 // Use Render backend URL in production, local proxy in development
 const API_BASE_URL = import.meta.env.VITE_API_URL || 
   (import.meta.env.MODE === 'development' 
-    ? '/api' 
+    ? 'http://localhost:3001/api' 
     : 'https://taskflow-backend-53y4.onrender.com/api');
+
+console.log('[API Config] Mode:', import.meta.env.MODE);
+console.log('[API Config] Base URL:', API_BASE_URL);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
