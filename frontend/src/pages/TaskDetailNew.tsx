@@ -218,7 +218,10 @@ const TaskDetailNew = () => {
   const canEdit = isAdmin || isAssignee;
 
   const availableActions = () => {
-    if (!task || !isAssignee) return [];
+    if (!task) return [];
+    // Only assignee or admin can perform actions
+    if (!isAssignee && !isAdmin) return [];
+    
     if (task.status === 'open') {
       return [
         {
@@ -240,6 +243,18 @@ const TaskDetailNew = () => {
         {
           label: 'Mark Back to Open',
           onClick: () => updateStatus('open'),
+        },
+      ];
+    }
+    if (task.status === 'pending_approval' && isAdmin) {
+      return [
+        {
+          label: 'Approve Task',
+          onClick: () => handleApprove(),
+        },
+        {
+          label: 'Reject Task',
+          onClick: () => handleReject(),
         },
       ];
     }
@@ -326,6 +341,29 @@ const TaskDetailNew = () => {
       await Promise.all([fetchAttachments(), fetchTimeline()]);
     } catch (error) {
       alert('Failed to remove attachment');
+    }
+  };
+
+  const handleApprove = async () => {
+    if (!id) return;
+    if (!confirm('Approve this task?')) return;
+    try {
+      await api.post(`/tasks/${id}/approve`);
+      await Promise.all([fetchTask(), fetchTimeline()]);
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Failed to approve task');
+    }
+  };
+
+  const handleReject = async () => {
+    if (!id) return;
+    const reason = prompt('Reason for rejection (optional):');
+    if (reason === null) return; // User cancelled
+    try {
+      await api.post(`/tasks/${id}/reject`, { reason });
+      await Promise.all([fetchTask(), fetchTimeline()]);
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Failed to reject task');
     }
   };
 
