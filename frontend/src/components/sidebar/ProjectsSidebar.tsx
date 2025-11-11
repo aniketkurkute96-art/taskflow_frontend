@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import { useProjectStore } from '../../stores/projectStore';
+import { useAuth } from '../../contexts/AuthContext';
 import NewProjectModal from './NewProjectModal';
 
 const ProjectsSidebar = () => {
   const { projects, selectedProjectId, selectProject } = useProjectStore();
+  const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const isAdmin = user?.role === 'admin';
 
   const filteredProjects = projects.filter((project) =>
     project.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -113,28 +117,30 @@ const ProjectsSidebar = () => {
               )}
             </div>
 
-            {/* Add Project Button */}
-            <div className="border-t border-slate-200 p-3 dark:border-slate-700">
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="flex w-full items-center gap-2 rounded-md border border-dashed border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 dark:border-slate-600 dark:text-slate-400 dark:hover:border-indigo-500 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400"
-              >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+            {/* Add Project Button - Admin Only */}
+            {isAdmin && (
+              <div className="border-t border-slate-200 p-3 dark:border-slate-700">
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="flex w-full items-center gap-2 rounded-md border border-dashed border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 dark:border-slate-600 dark:text-slate-400 dark:hover:border-indigo-500 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                New Project
-              </button>
-            </div>
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  New Project
+                </button>
+              </div>
+            )}
           </>
         )}
 
