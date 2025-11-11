@@ -13,6 +13,8 @@ import TaskEdit from './pages/TaskEdit';
 import AdminTemplates from './pages/AdminTemplates';
 import AdminPanel from './pages/AdminPanel';
 import TestLogin from './pages/TestLogin';
+import { isClickupUIEnabled } from './lib/featureFlags';
+import ClickupApp from './clickup/ClickupApp';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -27,80 +29,86 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 function App() {
+  const enableClickupUI = isClickupUIEnabled();
+
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/test-login" element={<TestLogin />} />
-          <Route
-            path="/dashboard"
-            element={
-              <PrivateRoute>
-                <Dashboard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/approval-bucket"
-            element={
-              <PrivateRoute>
-                <ApprovalBucket />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/waiting-on"
-            element={
-              <PrivateRoute>
-                <WaitingOn />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/tasks/create"
-            element={
-              <PrivateRoute>
-                <TaskCreateNew />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/tasks/:id"
-            element={
-              <PrivateRoute>
-                <TaskDetailNew />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/tasks/:id/edit"
-            element={
-              <PrivateRoute>
-                <TaskEdit />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin/templates"
-            element={
-              <AdminRoute>
-                <AdminTemplates />
-              </AdminRoute>
-            }
-          />
-          <Route
-            path="/admin/panel"
-            element={
-              <AdminRoute>
-                <AdminPanel />
-              </AdminRoute>
-            }
-          />
-          <Route path="/" element={<Navigate to="/dashboard" />} />
-        </Routes>
-      </Router>
+      {enableClickupUI ? (
+        <ClickupApp />
+      ) : (
+        <Router>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/test-login" element={<TestLogin />} />
+            <Route
+              path="/dashboard"
+              element={
+                <PrivateRoute>
+                  <Dashboard />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/approval-bucket"
+              element={
+                <PrivateRoute>
+                  <ApprovalBucket />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/waiting-on"
+              element={
+                <PrivateRoute>
+                  <WaitingOn />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/tasks/create"
+              element={
+                <PrivateRoute>
+                  <TaskCreateNew />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/tasks/:id"
+              element={
+                <PrivateRoute>
+                  <TaskDetailNew />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/tasks/:id/edit"
+              element={
+                <PrivateRoute>
+                  <TaskEdit />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin/templates"
+              element={
+                <AdminRoute>
+                  <AdminTemplates />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/panel"
+              element={
+                <AdminRoute>
+                  <AdminPanel />
+                </AdminRoute>
+              }
+            />
+            <Route path="/" element={<Navigate to="/dashboard" />} />
+          </Routes>
+        </Router>
+      )}
     </AuthProvider>
   );
 }

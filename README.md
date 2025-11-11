@@ -97,6 +97,21 @@ Frontend runs on: http://localhost:5173
 
 Open http://localhost:5173 in your browser.
 
+### Optional ClickUp-style UI (Feature Flag)
+
+A new experimental workspace inspired by ClickUp can be enabled for early testing. The feature is _disabled_ by default to guarantee the classic UI remains unchanged.
+
+1. Create a `.env.local` file inside the `frontend` directory.
+2. Add the flag:
+
+```bash
+VITE_ENABLE_CLICKUP_UI=true
+```
+
+3. Restart `npm run dev` in the frontend terminal.
+
+When the flag is `true`, the app boots into the new two-pane shell. Set the flag to `false` (or remove it) to return to the existing experience.
+
 ## 👤 Test Accounts
 
 All users have password: `password`
