@@ -8,12 +8,13 @@ const Signup = () => {
     email: '',
     password: '',
     confirmPassword: '',
+    role: 'assignee',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -49,7 +50,7 @@ const Signup = () => {
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        role: 'assignee', // Default role
+        role: formData.role, // User selected role
       });
 
       console.log('Signup successful:', response.data);
@@ -158,6 +159,25 @@ const Signup = () => {
                 value={formData.confirmPassword}
                 onChange={handleChange}
               />
+            </div>
+
+            <div>
+              <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+                Role
+              </label>
+              <select
+                id="role"
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              >
+                <option value="assignee">Assignee</option>
+                <option value="creator">Creator</option>
+                <option value="hod">HOD</option>
+                <option value="cfo">CFO</option>
+                <option value="admin">Admin (Full Access)</option>
+              </select>
             </div>
           </div>
 
