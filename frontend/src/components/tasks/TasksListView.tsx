@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useColumnStore } from '../../stores/columnStore';
 import { useFilterStore } from '../../stores/filterStore';
@@ -125,10 +125,10 @@ const TasksListView = () => {
   }, [tasks, filters]);
 
   // Virtual scrolling setup
-  const parentRef = useState<HTMLDivElement | null>(null)[0];
+  const parentRef = useRef<HTMLDivElement | null>(null);
   const virtualizer = useVirtualizer({
     count: filteredTasks.length,
-    getScrollElement: () => parentRef,
+    getScrollElement: () => parentRef.current,
     estimateSize: () => 48, // Row height
     overscan: 10,
   });
@@ -175,11 +175,7 @@ const TasksListView = () => {
 
       {/* Table Body - Virtualized */}
       <div
-        ref={(node) => {
-          if (node) {
-            (parentRef as any) = node;
-          }
-        }}
+        ref={parentRef}
         className="flex-1 overflow-auto"
         style={{ height: '100%' }}
       >
