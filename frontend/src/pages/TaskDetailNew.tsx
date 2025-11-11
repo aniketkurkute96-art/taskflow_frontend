@@ -122,6 +122,17 @@ const TaskDetailNew = () => {
     }
   };
 
+  const handleComplete = async () => {
+    try {
+      await api.post(`/tasks/${id}/complete`);
+      fetchTask();
+      fetchActivityLogs();
+      alert('Task submitted for approval successfully!');
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Failed to submit task for approval');
+    }
+  };
+
   const handleStatusChange = async (newStatus: string) => {
     try {
       await api.patch(`/tasks/${id}/status`, { status: newStatus });
@@ -313,16 +324,16 @@ const TaskDetailNew = () => {
                   {task.status === 'in_progress' && (
                     <>
                       <button
-                        onClick={() => handleStatusChange('pending_approval')}
+                        onClick={handleComplete}
                         className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                       >
                         Submit for Approval
                       </button>
                       <button
-                        onClick={() => handleStatusChange('rejected')}
-                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                        onClick={() => handleStatusChange('open')}
+                        className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
                       >
-                        Reject
+                        Cancel Work
                       </button>
                     </>
                   )}
