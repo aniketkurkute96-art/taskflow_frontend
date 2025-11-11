@@ -6,6 +6,8 @@ import Dashboard from './pages/Dashboard';
 import ApprovalBucket from './pages/ApprovalBucket';
 import TaskCreate from './pages/TaskCreate';
 import TaskDetail from './pages/TaskDetail';
+import TaskCreateNew from './pages/TaskCreateNew';
+import TaskDetailNew from './pages/TaskDetailNew';
 import AdminTemplates from './pages/AdminTemplates';
 import AdminPanel from './pages/AdminPanel';
 import TestLogin from './pages/TestLogin';
@@ -50,7 +52,7 @@ function App() {
             path="/tasks/create"
             element={
               <PrivateRoute>
-                <TaskCreate />
+                <TaskCreateNew />
               </PrivateRoute>
             }
           />
@@ -58,7 +60,7 @@ function App() {
             path="/tasks/:id"
             element={
               <PrivateRoute>
-                <TaskDetail />
+                <TaskDetailNew />
               </PrivateRoute>
             }
           />
