@@ -425,6 +425,37 @@ const TaskDetailNew = () => {
             )}
           </SectionCard>
 
+          <SectionCard
+            title="Activity"
+            subtitle="Comments and timeline updates. (Mobile refinement planned.)"
+          >
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,340px)_1fr] lg:items-start">
+              <form onSubmit={handleAddComment} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Add a comment</p>
+                <textarea
+                  value={comment}
+                  onChange={(event) => setComment(event.target.value)}
+                  rows={4}
+                  placeholder="Share progress, ask questions, or mention teammates…"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                />
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={commentBusy || !comment.trim()}
+                    className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {commentBusy ? 'Posting…' : 'Post Comment'}
+                  </button>
+                </div>
+              </form>
+
+              <div className="max-h-[620px] overflow-y-auto pr-1">
+                <Timeline items={timeline} />
+              </div>
+            </div>
+          </SectionCard>
+
           <SectionCard title="Priority & Recurrence">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
@@ -449,21 +480,19 @@ const TaskDetailNew = () => {
 
           <SectionCard title="Attachments" subtitle="Share invoices, briefs, or other context.">
             <div className="space-y-4">
-              {canEdit && (
-                <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500 transition hover:border-indigo-400 hover:text-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-indigo-400/70">
-                  <span className="font-medium text-indigo-600 dark:text-indigo-300">
-                    {uploadBusy ? 'Uploading…' : 'Drag & drop or click to upload'}
-                  </span>
-                  <span className="mt-1 text-xs">PDF, DOCX, XLSX, PNG up to 25MB</span>
-                  <input
-                    type="file"
-                    multiple
-                    onChange={(event) => handleAttachmentUpload(event.target.files)}
-                    className="hidden"
-                    disabled={uploadBusy}
-                  />
-                </label>
-              )}
+              <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500 transition hover:border-indigo-400 hover:text-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-indigo-400/70">
+                <span className="font-medium text-indigo-600 dark:text-indigo-300">
+                  {uploadBusy ? 'Uploading…' : 'Drag & drop or click to upload'}
+                </span>
+                <span className="mt-1 text-xs">PDF, DOCX, XLSX, PNG up to 25MB</span>
+                <input
+                  type="file"
+                  multiple
+                  onChange={(event) => handleAttachmentUpload(event.target.files)}
+                  className="hidden"
+                  disabled={uploadBusy}
+                />
+              </label>
 
               {attachments.length === 0 && (
                 <p className="rounded-lg border border-dashed border-slate-200 px-3 py-4 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
@@ -507,33 +536,6 @@ const TaskDetailNew = () => {
                   </li>
                 ))}
               </ul>
-            </div>
-          </SectionCard>
-
-          <SectionCard title="Activity" subtitle="Comments, approvals, and edits all in one place.">
-            <div className="space-y-4">
-              <form onSubmit={handleAddComment} className="space-y-3">
-                <textarea
-                  value={comment}
-                  onChange={(event) => setComment(event.target.value)}
-                  rows={3}
-                  placeholder="Add a comment…"
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                />
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={commentBusy || !comment.trim()}
-                    className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {commentBusy ? 'Posting…' : 'Post Comment'}
-                  </button>
-                </div>
-              </form>
-
-              <div className="max-h-[600px] overflow-y-auto pr-1">
-                <Timeline items={timeline} />
-              </div>
             </div>
           </SectionCard>
         </div>
