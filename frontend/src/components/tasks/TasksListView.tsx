@@ -11,6 +11,8 @@ interface Task {
   title: string;
   description?: string;
   status: string;
+  approvalStatus?: string;
+  approvalType?: string;
   flag?: string;
   startDate?: string;
   dueDate?: string;

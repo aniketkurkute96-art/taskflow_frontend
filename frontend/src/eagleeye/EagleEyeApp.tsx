@@ -5,6 +5,10 @@ import Signup from '../pages/Signup';
 import { useAuth } from '../contexts/AuthContext';
 import AppShell from '../components/shell/AppShell';
 import EagleEyeHome from './EagleEyeHome';
+import ApprovalBucket from '../pages/ApprovalBucket';
+import WaitingOn from '../pages/WaitingOn';
+import TaskDetailNew from '../pages/TaskDetailNew';
+import TaskCreateNew from '../pages/TaskCreateNew';
 import TestLogin from '../pages/TestLogin';
 
 const PrivateRoute = ({ children }: { children: ReactNode }) => {
@@ -25,6 +29,46 @@ const EagleEyeApp = () => {
             <PrivateRoute>
               <AppShell>
                 <EagleEyeHome />
+              </AppShell>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/approval-bucket"
+          element={
+            <PrivateRoute>
+              <AppShell>
+                <ApprovalBucket />
+              </AppShell>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/waiting-on"
+          element={
+            <PrivateRoute>
+              <AppShell>
+                <WaitingOn />
+              </AppShell>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/tasks/create"
+          element={
+            <PrivateRoute>
+              <AppShell>
+                <TaskCreateNew />
+              </AppShell>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/tasks/:id"
+          element={
+            <PrivateRoute>
+              <AppShell>
+                <TaskDetailNew />
               </AppShell>
             </PrivateRoute>
           }

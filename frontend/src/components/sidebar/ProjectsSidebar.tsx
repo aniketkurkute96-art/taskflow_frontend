@@ -1,9 +1,12 @@
 import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useProjectStore } from '../../stores/projectStore';
 import { useAuth } from '../../contexts/AuthContext';
 import NewProjectModal from './NewProjectModal';
 
 const ProjectsSidebar = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { projects, selectedProjectId, selectProject } = useProjectStore();
   const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -11,6 +14,12 @@ const ProjectsSidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const isAdmin = user?.role === 'admin';
+
+  const navigationLinks = [
+    { path: '/workspace', label: 'All Tasks', icon: '📋' },
+    { path: '/approval-bucket', label: 'Approval Bucket', icon: '✓' },
+    { path: '/waiting-on', label: 'Waiting On', icon: '⏳' },
+  ];
 
   const filteredProjects = projects.filter((project) =>
     project.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -86,6 +95,36 @@ const ProjectsSidebar = () => {
                   />
                 </svg>
               </div>
+            </div>
+
+            {/* Navigation Links */}
+            <div className="border-b border-slate-200 px-2 pb-3 dark:border-slate-700">
+              {navigationLinks.map((link) => (
+                <button
+                  key={link.path}
+                  onClick={() => {
+                    navigate(link.path);
+                    if (link.path === '/workspace') {
+                      selectProject(null);
+                    }
+                  }}
+                  className={`mb-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors ${
+                    location.pathname === link.path
+                      ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
+                      : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  <span className="text-base">{link.icon}</span>
+                  <span className="flex-1">{link.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Projects Section Header */}
+            <div className="px-3 pt-4 pb-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Projects
+              </h3>
             </div>
 
             {/* Projects List */}

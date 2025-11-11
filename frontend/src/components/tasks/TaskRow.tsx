@@ -6,6 +6,8 @@ interface Task {
   id: string;
   title: string;
   status: string;
+  approvalStatus?: string;
+  approvalType?: string;
   flag?: string;
   startDate?: string;
   dueDate?: string;
@@ -101,6 +103,28 @@ const TaskRow = ({ task, columns }: TaskRowProps) => {
             }`}
           >
             {task.status.replace(/_/g, ' ')}
+          </span>
+        );
+
+      case 'approvalStatus':
+        if (!task.approvalStatus || task.approvalStatus === 'none') {
+          return <span className="text-slate-400 text-sm">—</span>;
+        }
+        
+        const approvalColors: Record<string, string> = {
+          pending: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+          approved: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
+          rejected: 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400',
+          partial: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400',
+        };
+
+        return (
+          <span
+            className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+              approvalColors[task.approvalStatus] || 'bg-slate-100 text-slate-800'
+            }`}
+          >
+            {task.approvalStatus.charAt(0).toUpperCase() + task.approvalStatus.slice(1)}
           </span>
         );
 
