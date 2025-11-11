@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import ApprovalBucket from './pages/ApprovalBucket';
+import WaitingOn from './pages/WaitingOn';
 import TaskCreate from './pages/TaskCreate';
 import TaskDetail from './pages/TaskDetail';
 import TaskCreateNew from './pages/TaskCreateNew';
@@ -46,6 +47,14 @@ function App() {
             element={
               <PrivateRoute>
                 <ApprovalBucket />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/waiting-on"
+            element={
+              <PrivateRoute>
+                <WaitingOn />
               </PrivateRoute>
             }
           />
