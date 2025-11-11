@@ -147,6 +147,15 @@ When the flag is `true`, the app boots into the new EagleEye workspace with two-
   - Real-time task count display
 - **Responsive design** with dark mode support
 
+**PR 4 — Task Workspace (Complete)**
+- **Mobile-first creation form** with sections for details, schedule, approvals, and attachments
+- Priority flags, notes, recurrence setup, and kickoff comment captured at creation time
+- Attachment drag & drop with previews, dedupe, and upload progress
+- Approval bucket column and sidebar navigation (All Tasks / Approval Bucket / Waiting On)
+- Unified activity timeline including field edits, approvals, comments, and attachment events
+- Modern timeline styling for attachments, priority changes, and real-time refresh after actions
+- Responsive task detail layout with quick actions, recurrence summary, and attachment management
+
 ## 👤 Test Accounts
 
 All users have password: `password`

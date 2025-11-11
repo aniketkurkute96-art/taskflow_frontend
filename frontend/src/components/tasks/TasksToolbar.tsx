@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useFilterStore } from '../../stores/filterStore';
-import { useColumnStore } from '../../stores/columnStore';
 import { TASK_FLAGS } from '../../types/task';
 import type { TaskFlag } from '../../types/task';
 import ModernDatePicker from './ModernDatePicker';
