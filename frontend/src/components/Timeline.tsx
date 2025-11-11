@@ -93,6 +93,7 @@ const Timeline = ({ items }: TimelineProps) => {
           </div>
         );
       case 'edited':
+      case 'field_changed':
         return (
           <div className={`${iconClass} bg-orange-100`}>
             <svg className="w-5 h-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -140,6 +141,7 @@ const Timeline = ({ items }: TimelineProps) => {
       case 'rejected': return 'text-red-600';
       case 'completed': return 'text-green-600';
       case 'edited': return 'text-orange-600';
+      case 'field_changed': return 'text-orange-600';
       case 'commented': return 'text-gray-600';
       default: return 'text-gray-600';
     }
@@ -181,6 +183,19 @@ const Timeline = ({ items }: TimelineProps) => {
                     <p className="mt-1 text-sm text-gray-700 whitespace-pre-wrap break-words">
                       {item.description}
                     </p>
+                    {/* Show old and new values if available */}
+                    {item.oldValue && item.newValue && item.action === 'field_changed' && (
+                      <div className="mt-2 text-xs bg-gray-50 border border-gray-200 rounded-md p-2">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-gray-500">From:</span>
+                          <span className="font-medium text-red-600 line-through">{item.oldValue}</span>
+                        </div>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className="text-gray-500">To:</span>
+                          <span className="font-medium text-green-600">{item.newValue}</span>
+                        </div>
+                      </div>
+                    )}
                     <div className="mt-2 flex items-center space-x-2">
                       {item.user && (
                         <div className="flex items-center space-x-2">
