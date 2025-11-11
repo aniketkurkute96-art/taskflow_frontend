@@ -26,12 +26,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await api.post('/auth/login', { email, password });
-    const { user, token } = response.data;
-    setUser(user);
-    setToken(token);
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
+    try {
+      console.log('Attempting login...', { email });
+      const response = await api.post('/auth/login', { email, password });
+      console.log('Login response:', response.data);
+      
+      const { user, token } = response.data;
+      
+      if (!user || !token) {
+        throw new Error('Invalid response from server');
+      }
+      
+      setUser(user);
+      setToken(token);
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      console.log('Login successful!');
+    } catch (error: any) {
+      console.error('Login error:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      throw error;
+    }
   };
 
   const logout = () => {

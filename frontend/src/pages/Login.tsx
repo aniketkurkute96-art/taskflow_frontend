@@ -15,11 +15,24 @@ const Login = () => {
     setError('');
     setLoading(true);
 
+    console.log('Form submitted with:', { email, password: '***' });
+
     try {
       await login(email, password);
+      console.log('Login successful, navigating to dashboard...');
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed');
+      console.error('Login failed:', err);
+      
+      if (err.code === 'ERR_NETWORK') {
+        setError('Cannot connect to server. Please check if the backend is running.');
+      } else if (err.response?.status === 401) {
+        setError('Invalid email or password');
+      } else if (err.response?.status === 500) {
+        setError('Server error. Database might not be seeded. Check Render logs.');
+      } else {
+        setError(err.response?.data?.error || err.message || 'Login failed. Check console for details.');
+      }
     } finally {
       setLoading(false);
     }
