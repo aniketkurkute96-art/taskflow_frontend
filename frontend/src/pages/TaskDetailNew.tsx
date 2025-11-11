@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
+import Timeline from '../components/Timeline';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { format } from 'date-fns';
@@ -35,6 +36,17 @@ interface ActivityLog {
   createdAt: string;
 }
 
+interface TimelineItem {
+  id: string;
+  type: 'activity' | 'comment';
+  action: string;
+  description: string;
+  user?: { id: string; name: string; email: string };
+  oldValue?: string | null;
+  newValue?: string | null;
+  createdAt: string;
+}
+
 interface Attachment {
   id: string;
   filename: string;
@@ -58,6 +70,7 @@ const TaskDetailNew = () => {
   const [task, setTask] = useState<Task | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+  const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -74,6 +87,7 @@ const TaskDetailNew = () => {
     fetchTask();
     fetchComments();
     fetchActivityLogs();
+    fetchTimeline();
     fetchAttachments();
     fetchUsers();
   }, [id]);
@@ -108,6 +122,15 @@ const TaskDetailNew = () => {
     }
   };
 
+  const fetchTimeline = async () => {
+    try {
+      const response = await api.get(`/tasks/${id}/timeline`);
+      setTimeline(response.data);
+    } catch (error) {
+      console.error('Error fetching timeline:', error);
+    }
+  };
+
   const fetchAttachments = async () => {
     try {
       const response = await api.get(`/tasks/${id}/attachments`);
@@ -139,6 +162,7 @@ const TaskDetailNew = () => {
       setSelectedUser('');
       fetchTask();
       fetchActivityLogs();
+      fetchTimeline();
       alert('Task forwarded successfully!');
     } catch (error: any) {
       alert(error.response?.data?.error || 'Failed to forward task');
@@ -169,6 +193,7 @@ const TaskDetailNew = () => {
       setNewComment('');
       fetchComments();
       fetchActivityLogs(); // Refresh activity log
+      fetchTimeline(); // Refresh timeline
     } catch (error) {
       console.error('Error adding comment:', error);
       alert('Failed to add comment');
@@ -182,6 +207,7 @@ const TaskDetailNew = () => {
       await api.post(`/tasks/${id}/complete`);
       fetchTask();
       fetchActivityLogs();
+      fetchTimeline();
       alert('Task submitted for approval successfully!');
     } catch (error: any) {
       alert(error.response?.data?.error || 'Failed to submit task for approval');
@@ -193,6 +219,7 @@ const TaskDetailNew = () => {
       await api.patch(`/tasks/${id}/status`, { status: newStatus });
       fetchTask();
       fetchActivityLogs();
+      fetchTimeline();
       alert('Status updated successfully');
     } catch (error: any) {
       alert(error.response?.data?.error || 'Failed to update status');
@@ -393,63 +420,40 @@ const TaskDetailNew = () => {
             )}
           </div>
 
-          {/* RIGHT SIDE - Activity Log & Comments */}
+          {/* RIGHT SIDE - Activity Timeline */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Activity Log */}
+            {/* Unified Timeline - Activity Log & Comments */}
             <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Activity Log</h3>
-              <div className="space-y-4 max-h-96 overflow-y-auto">
-                {activityLogs.length === 0 ? (
-                  <p className="text-sm text-gray-500">No activity yet</p>
-                ) : (
-                  activityLogs.map((log) => (
-                    <div key={log.id} className="border-l-2 border-indigo-500 pl-4">
-                      <p className="text-sm font-medium text-gray-900">{log.description}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {log.user?.name || 'System'} • {format(new Date(log.createdAt), 'MMM dd, HH:mm')}
-                      </p>
-                    </div>
-                  ))
-                )}
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">Activity & Comments</h3>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                  {timeline.length} {timeline.length === 1 ? 'item' : 'items'}
+                </span>
               </div>
-            </div>
 
-            {/* Comments */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Comments</h3>
-              
               {/* Add Comment Form */}
-              <form onSubmit={handleAddComment} className="mb-4">
-                <textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Add a comment..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                  rows={3}
-                />
-                <button
-                  type="submit"
-                  disabled={commentLoading || !newComment.trim()}
-                  className="mt-2 w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
-                >
-                  {commentLoading ? 'Posting...' : 'Post Comment'}
-                </button>
-              </form>
+              <div className="mb-6 pb-6 border-b border-gray-200">
+                <form onSubmit={handleAddComment} className="space-y-3">
+                  <textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Add a comment..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                    rows={3}
+                  />
+                  <button
+                    type="submit"
+                    disabled={commentLoading || !newComment.trim()}
+                    className="w-full px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {commentLoading ? 'Posting...' : 'Post Comment'}
+                  </button>
+                </form>
+              </div>
 
-              {/* Comments List */}
-              <div className="space-y-4 max-h-96 overflow-y-auto">
-                {comments.length === 0 ? (
-                  <p className="text-sm text-gray-500">No comments yet</p>
-                ) : (
-                  comments.map((comment) => (
-                    <div key={comment.id} className="border-b border-gray-200 pb-3 last:border-0">
-                      <p className="text-sm text-gray-900">{comment.content}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {comment.user.name} • {format(new Date(comment.createdAt), 'MMM dd, HH:mm')}
-                      </p>
-                    </div>
-                  ))
-                )}
+              {/* Timeline */}
+              <div className="max-h-[600px] overflow-y-auto">
+                <Timeline items={timeline} />
               </div>
             </div>
           </div>
