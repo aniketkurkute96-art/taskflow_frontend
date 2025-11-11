@@ -9,6 +9,7 @@ import ApprovalBucket from '../pages/ApprovalBucket';
 import WaitingOn from '../pages/WaitingOn';
 import TaskDetailNew from '../pages/TaskDetailNew';
 import TaskCreateNew from '../pages/TaskCreateNew';
+import TaskEdit from '../pages/TaskEdit';
 import TestLogin from '../pages/TestLogin';
 
 const PrivateRoute = ({ children }: { children: ReactNode }) => {
@@ -69,6 +70,16 @@ const EagleEyeApp = () => {
             <PrivateRoute>
               <AppShell>
                 <TaskDetailNew />
+              </AppShell>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/tasks/:id/edit"
+          element={
+            <PrivateRoute>
+              <AppShell>
+                <TaskEdit />
               </AppShell>
             </PrivateRoute>
           }
