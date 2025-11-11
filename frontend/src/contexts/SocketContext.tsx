@@ -27,7 +27,12 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     if (token) {
-      const newSocket = io(process.env.REACT_APP_API_URL || 'http://localhost:3001', {
+      const SOCKET_URL = import.meta.env.VITE_API_URL || 
+        (import.meta.env.MODE === 'development' 
+          ? 'http://localhost:3001' 
+          : 'https://taskflow-backend-53y4.onrender.com');
+      
+      const newSocket = io(SOCKET_URL, {
         auth: {
           token: token,
         },
