@@ -112,6 +112,41 @@ VITE_ENABLE_EAGLEEYE_UI=true
 
 When the flag is `true`, the app boots into the new EagleEye workspace with two-pane shell. Set the flag to `false` (or remove it) to return to the existing experience.
 
+#### ✨ What's Included in EagleEye UI
+
+**PR 1 — Foundation (Complete)**
+- Feature flag system (`VITE_ENABLE_EAGLEEYE_UI`)
+- Two-pane shell layout (projects sidebar + content area)
+- Type definitions for tasks, projects, and filters
+- Authentication preserved from classic UI
+
+**PR 2 — Projects Sidebar (Complete)**
+- Projects list with color indicators
+- Search and filter projects
+- "+ New Project" button (admin-only)
+- Local persistence (localStorage)
+- Project selection state management (Zustand)
+
+**PR 3 — Enhanced Task List (Complete)**
+- **Virtualized table** for performance with large task lists
+- **Powerful filters:**
+  - Search by task name, description, or assignee
+  - Status filter (open, in progress, pending approval, approved, rejected)
+  - Assignee multi-select filter
+  - Flag filter (high priority, blocked, client wait, internal wait)
+  - Date range filters (start date, due date)
+- **Column management:**
+  - Show/hide columns (title, status, assignee, flag, start date, end date, project, updated)
+  - Adjustable column widths
+  - Persistent column configuration (localStorage)
+- **Smart UI:**
+  - Active filter count badge
+  - Clear all filters button
+  - Empty states with helpful messages
+  - Click row to view task details
+  - Real-time task count display
+- **Responsive design** with dark mode support
+
 ## 👤 Test Accounts
 
 All users have password: `password`
