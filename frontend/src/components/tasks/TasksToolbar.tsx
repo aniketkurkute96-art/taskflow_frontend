@@ -3,6 +3,7 @@ import { useFilterStore } from '../../stores/filterStore';
 import { useColumnStore } from '../../stores/columnStore';
 import { TASK_FLAGS } from '../../types/task';
 import type { TaskFlag } from '../../types/task';
+import ModernDatePicker from './ModernDatePicker';
 
 interface TasksToolbarProps {
   users: Array<{ id: string; name: string; email: string }>;
@@ -241,18 +242,16 @@ const TasksToolbar = ({ users, showColumnsButton = true }: TasksToolbarProps) =>
           <svg className="h-4 w-4 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          <input
-            type="date"
-            value={startDateFrom || ''}
-            onChange={(e) => setStartDateRange(e.target.value || null, startDateTo)}
-            className="w-[130px] border-0 bg-transparent px-1 py-0.5 text-sm focus:outline-none focus:ring-0 dark:text-slate-100 [color-scheme:light] dark:[color-scheme:dark]"
+          <ModernDatePicker
+            value={startDateFrom}
+            onChange={(date) => setStartDateRange(date, startDateTo)}
+            placeholder="Start date"
           />
-          <span className="text-slate-400 text-sm">→</span>
-          <input
-            type="date"
-            value={dueDateTo || ''}
-            onChange={(e) => setDueDateRange(dueDateFrom, e.target.value || null)}
-            className="w-[130px] border-0 bg-transparent px-1 py-0.5 text-sm focus:outline-none focus:ring-0 dark:text-slate-100 [color-scheme:light] dark:[color-scheme:dark]"
+          <span className="text-slate-400 text-sm px-1">→</span>
+          <ModernDatePicker
+            value={dueDateTo}
+            onChange={(date) => setDueDateRange(dueDateFrom, date)}
+            placeholder="Due date"
           />
         </div>
 
