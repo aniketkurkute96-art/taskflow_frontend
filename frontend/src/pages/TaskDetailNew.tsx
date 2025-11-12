@@ -181,7 +181,6 @@ const TaskDetailNew = () => {
   const [forwardUserId, setForwardUserId] = useState('');
   const [forwardBusy, setForwardBusy] = useState(false);
   const [uploadBusy, setUploadBusy] = useState(false);
-  const [timeline, setTimeline] = useState<TimelineItem[]>([]);
 
   const isMobile = useMemo(() => {
     if (typeof window === 'undefined') return false;
