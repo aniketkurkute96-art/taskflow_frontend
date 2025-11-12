@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { isEagleEyeUIEnabled } from '../lib/featureFlags';
+import BrandLogo from './BrandLogo';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -29,9 +30,7 @@ const Layout = ({ children }: LayoutProps) => {
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <Link to="/dashboard" className="text-xl font-bold text-indigo-600">
-                  Nagrik TaskFlow
-                </Link>
+                <BrandLogo />
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
                 <Link

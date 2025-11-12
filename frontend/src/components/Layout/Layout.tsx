@@ -32,6 +32,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { UserRole } from '../../types';
 import NotificationBell from './NotificationBell';
 import { isEagleEyeUIEnabled } from '../../lib/featureFlags';
+import BrandLogo from '../BrandLogo';
 
 const drawerWidth = 240;
 
@@ -86,9 +87,10 @@ const Layout: React.FC<LayoutProps> = () => {
   const drawer = (
     <div>
       <Toolbar>
-        <Typography variant="h6" noWrap component="div">
-          Nagrik TaskFlow
-        </Typography>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          {/* Use the wordmark component inside MUI toolbar */}
+          <BrandLogo />
+        </div>
       </Toolbar>
       <List>
         {menuItems.map((item) => (
@@ -141,9 +143,9 @@ const Layout: React.FC<LayoutProps> = () => {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Nagrik TaskFlow
-          </Typography>
+          <div style={{ flexGrow: 1 }}>
+            <BrandLogo />
+          </div>
           <NotificationBell />
           <IconButton
             size="large"

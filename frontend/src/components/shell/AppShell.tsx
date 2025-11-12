@@ -2,6 +2,7 @@ import { ReactNode, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Outlet, useNavigate } from 'react-router-dom';
 import ProjectsSidebar from '../sidebar/ProjectsSidebar';
+import BrandLogo from '../BrandLogo';
 import ThemeToggle from '../ThemeToggle';
 
 interface AppShellProps {
@@ -35,15 +36,7 @@ const AppShell = ({ header, sidebar, children }: AppShellProps) => {
       {/* Global Header (full width) */}
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:border-slate-700 dark:bg-slate-900/80">
         <div className="flex w-full items-center justify-between px-4 py-3">
-          {header ?? (
-            <button
-              onClick={() => navigate('/workspace')}
-              className="text-sm font-semibold text-slate-600 transition hover:text-slate-800 dark:text-slate-300 dark:hover:text-slate-200"
-              title="Go to workspace"
-            >
-              Nagrik TaskFlow
-            </button>
-          )}
+          {header ?? <BrandLogo />}
 
           {/* User Profile Section */}
           <div className="flex items-center gap-2">
