@@ -977,7 +977,7 @@ const TasksTableView = () => {
         style={{ contain: 'paint', overflowX: 'auto' }}
       >
         <div className="rounded-2xl border border-slate-700/80 bg-slate-800/40 shadow-xl shadow-cyan-900/20">
-          <table className="w-full min-w-[1600px] text-sm text-slate-200">
+          <table className="w-full min-w-[1400px] text-sm text-slate-200">
             <thead className="sticky top-0 z-10 bg-slate-900/90 backdrop-blur-md">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
