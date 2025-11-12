@@ -580,7 +580,7 @@ const TaskDetailNew = () => {
               headerExtras={<Badge variant={task.approvalStatus ?? 'none'} />}
             />
           </div>
-          <div className="sticky top-[calc(64px+380px)]">
+          <div>
             <TimelinePanel items={timeline} />
           </div>
         </aside>
