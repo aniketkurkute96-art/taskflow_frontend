@@ -1,10 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Layout from '../components/Layout';
 import api from '../services/api';
 import { Task, User } from '../types';
 import { format } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
+import { isEagleEyeUIEnabled } from '../lib/featureFlags';
+import OverviewCard from '../components/OverviewCard';
+import ActionButtons from '../components/ActionButtons';
+import CommentsPanel from '../components/CommentsPanel';
+import TimelinePanel from '../components/TimelinePanel';
+import Badge from '../components/Badge';
+import ModalConfirm from '../components/ModalConfirm';
 
 const TaskDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +23,9 @@ const TaskDetail = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [selectedAction, setSelectedAction] = useState('');
   const [showForwardDialog, setShowForwardDialog] = useState(false);
+  const [timeline, setTimeline] = useState<any[]>([]);
+  const [confirm, setConfirm] = useState<{ open: boolean; title?: string; action?: () => Promise<void> | void }>({ open: false });
+  const eagleEye = isEagleEyeUIEnabled();
 
   useEffect(() => {
     if (id) {
@@ -45,6 +54,16 @@ const TaskDetail = () => {
     }
   };
 
+  const fetchTimeline = async () => {
+    if (!id) return;
+    try {
+      const res = await api.get(`/tasks/${id}/timeline`);
+      setTimeline(res.data);
+    } catch (e) {
+      // non-fatal
+    }
+  };
+
   const handleForward = async () => {
     if (!forwardUserId) {
       alert('Please select a user to forward to');
@@ -64,7 +83,7 @@ const TaskDetail = () => {
     try {
       await api.post(`/tasks/${id}/complete`);
       alert('Task completed and sent for approval');
-      fetchTask();
+      await Promise.all([fetchTask(), fetchTimeline()]);
     } catch (error: any) {
       alert(error.response?.data?.error || 'Failed to complete task');
     }
@@ -74,7 +93,7 @@ const TaskDetail = () => {
     try {
       await api.patch(`/tasks/${id}/status`, { status });
       alert(`Task marked as ${status.replace('_', ' ')}`);
-      fetchTask();
+      await Promise.all([fetchTask(), fetchTimeline()]);
     } catch (error: any) {
       alert(error.response?.data?.error || 'Failed to update task status');
     }
@@ -115,282 +134,247 @@ const TaskDetail = () => {
     }
   };
 
+  useEffect(() => {
+    fetchTimeline();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
   if (loading) {
     return (
-      <Layout>
-        <div className="flex justify-center items-center h-64">
-          <div className="text-gray-500">Loading...</div>
+      <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-slate-900">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-indigo-400 border-t-transparent" />
+          <p className="text-sm text-slate-500 dark:text-slate-300">Loading task…</p>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   if (!task) {
     return (
-      <Layout>
-        <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">Task not found</p>
-        </div>
-      </Layout>
+      <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-slate-900">
+        <p className="text-sm text-slate-500 dark:text-slate-300">Task not found</p>
+      </div>
     );
   }
 
   const isAssignee = task.assigneeId === currentUser?.id;
 
+  const approvalBadgeVariant = (task.approvalStatus ?? 'none').toString();
+
   return (
-    <Layout>
-      <div className="px-4 py-6 sm:px-0">
-        <div className="max-w-4xl mx-auto">
-          <button
-            onClick={() => navigate(-1)}
-            className="mb-4 text-indigo-600 hover:text-indigo-900"
-          >
-            ← Back
-          </button>
-
-          <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
-            <div className="px-4 py-5 sm:px-6 flex justify-between items-start">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">{task.title}</h1>
-                <p className="mt-1 text-sm text-gray-500">
-                  Created {format(new Date(task.createdAt), 'MMM d, yyyy h:mm a')}
-                </p>
-              </div>
-              <span
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  task.status === 'approved'
-                    ? 'bg-green-100 text-green-800'
-                    : task.status === 'rejected'
-                    ? 'bg-red-100 text-red-800'
-                    : task.status === 'pending_approval'
-                    ? 'bg-yellow-100 text-yellow-800'
-                    : 'bg-gray-100 text-gray-800'
-                }`}
-              >
-                {task.status}
-              </span>
-            </div>
-            <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
-              <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Description</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {task.description || 'No description'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Approval Type</dt>
-                  <dd className="mt-1 text-sm text-gray-900">{task.approvalType}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Creator</dt>
-                  <dd className="mt-1 text-sm text-gray-900">{task.creator?.name}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Assignee</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {task.assignee?.name || 'Not assigned'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Department</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {task.department?.name || 'N/A'}
-                  </dd>
-                </div>
-                {task.amount && (
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">Amount</dt>
-                    <dd className="mt-1 text-sm text-gray-900">
-                      ${task.amount.toLocaleString()}
-                    </dd>
-                  </div>
-                )}
-              </dl>
-            </div>
-          </div>
-
-          {isAssignee && ['open', 'in_progress'].includes(task.status) && (
-            <div className="bg-white shadow sm:rounded-lg mb-6 p-4">
-              <h3 className="text-lg font-medium mb-4">Task Actions</h3>
-              <div className="flex items-center space-x-4">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Choose an action:
-                  </label>
-                  <select
-                    className="w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    value={selectedAction}
-                    onChange={(e) => handleActionSelect(e.target.value)}
-                  >
-                    <option value="">-- Select Action --</option>
-                    {task.status === 'open' && (
-                      <option value="in_progress">Mark as In Progress</option>
-                    )}
-                    {task.status === 'in_progress' && (
-                      <>
-                        <option value="complete">Mark as Complete</option>
-                        <option value="forward">Forward to Another User</option>
-                      </>
-                    )}
-                    <option value="reject">Reject Task</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Forward Dialog */}
-          {showForwardDialog && (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-                <h3 className="text-lg font-medium mb-4">Forward Task</h3>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select user to forward to:
-                  </label>
-                  <select
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    value={forwardUserId}
-                    onChange={(e) => setForwardUserId(e.target.value)}
-                  >
-                    <option value="">Select user</option>
-                    {users
-                      .filter((u) => u.id !== currentUser?.id)
-                      .map((u) => (
-                        <option key={u.id} value={u.id}>
-                          {u.name} ({u.email})
-                        </option>
-                      ))}
-                  </select>
-                </div>
-                <div className="flex justify-end space-x-3">
-                  <button
-                    onClick={() => {
-                      setShowForwardDialog(false);
-                      setForwardUserId('');
-                    }}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleForward();
-                      setShowForwardDialog(false);
-                    }}
-                    disabled={!forwardUserId}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Forward
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {task.nodes && task.nodes.length > 0 && (
-            <div className="bg-white shadow sm:rounded-lg mb-6">
-              <div className="px-4 py-5 sm:px-6">
-                <h3 className="text-lg font-medium">Forward Path</h3>
-              </div>
-              <div className="border-t border-gray-200">
-                <ul className="divide-y divide-gray-200">
-                  {task.nodes.map((node) => (
-                    <li key={node.id} className="px-4 py-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="font-medium">{node.fromUser?.name}</span>
-                          <span className="mx-2">→</span>
-                          <span className="font-medium">{node.toUser?.name}</span>
-                        </div>
-                        <span className="text-sm text-gray-500">
-                          {format(new Date(node.forwardedAt), 'MMM d, h:mm a')}
-                        </span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-
-          {task.approvers && task.approvers.length > 0 && (
-            <div className="bg-white shadow sm:rounded-lg mb-6">
-              <div className="px-4 py-5 sm:px-6">
-                <h3 className="text-lg font-medium">Approval Queue</h3>
-              </div>
-              <div className="border-t border-gray-200">
-                <ul className="divide-y divide-gray-200">
-                  {task.approvers.map((approver) => (
-                    <li key={approver.id} className="px-4 py-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="font-medium">Level {approver.levelOrder}:</span>
-                          <span className="ml-2">{approver.approver?.name}</span>
-                        </div>
-                        <span
-                          className={`px-2 py-1 rounded text-xs ${
-                            approver.status === 'approved'
-                              ? 'bg-green-100 text-green-800'
-                              : approver.status === 'rejected'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}
-                        >
-                          {approver.status}
-                        </span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-
-          <div className="bg-white shadow sm:rounded-lg">
-            <div className="px-4 py-5 sm:px-6">
-              <h3 className="text-lg font-medium">Comments</h3>
-            </div>
-            <div className="border-t border-gray-200 px-4 py-4">
-              <div className="space-y-4 mb-4">
-                {task.comments && task.comments.length > 0 ? (
-                  task.comments.map((c) => (
-                    <div key={c.id} className="border-l-4 border-indigo-500 pl-4">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{c.user?.name}</span>
-                        <span className="text-sm text-gray-500">
-                          {format(new Date(c.createdAt), 'MMM d, h:mm a')}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-gray-700">{c.content}</p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-gray-500">No comments yet</p>
-                )}
-              </div>
-              <div className="flex space-x-2">
-                <input
-                  type="text"
-                  placeholder="Add a comment..."
-                  className="flex-1 border rounded px-3 py-2"
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
-                />
+    <div className="min-h-screen p-6 bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
+      <div className="max-w-7xl mx-auto grid grid-cols-12 gap-6">
+        {/* Left: 8/12 */}
+        <section className="col-span-12 md:col-span-8 space-y-6">
+          <OverviewCard
+            title={task.title}
+            subtitle={`Created ${format(new Date(task.createdAt), 'MMM d, yyyy h:mm a')}`}
+            rightContent={
+              <div className="flex items-center gap-3">
+                <Badge variant={approvalBadgeVariant} />
                 <button
-                  onClick={handleAddComment}
-                  className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+                  onClick={() => navigate(`/tasks/${task.id}/edit`)}
+                  className="px-3 py-1 rounded-md border border-violet-600 text-violet-200 hover:bg-violet-600/10 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-600"
+                  aria-label="Edit task"
                 >
-                  Add
+                  Edit
                 </button>
               </div>
+            }
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Description</p>
+                <p className="mt-1 text-sm text-slate-200 dark:text-slate-200">{task.description || 'No description'}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Approval Type</p>
+                <p className="mt-1 text-sm text-slate-200 dark:text-slate-200">{task.approvalType}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Creator</p>
+                <p className="mt-1 text-sm text-slate-200 dark:text-slate-200">{task.creator?.name}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Assignee</p>
+                <p className="mt-1 text-sm text-slate-200 dark:text-slate-200">{task.assignee?.name || 'Not assigned'}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Department</p>
+                <p className="mt-1 text-sm text-slate-200 dark:text-slate-200">{task.department?.name || 'N/A'}</p>
+              </div>
+              {task.amount && (
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-slate-400">Amount</p>
+                  <p className="mt-1 text-sm text-slate-200 dark:text-slate-200">${task.amount.toLocaleString()}</p>
+                </div>
+              )}
+            </div>
+          </OverviewCard>
+
+          <ActionButtons
+            task={task}
+            canApprove={Boolean(currentUser)}
+            onApprove={() =>
+              setConfirm({
+                open: true,
+                title: 'Approve this task?',
+                action: async () => {
+                  await api.post(`/tasks/${id}/approve`);
+                  await Promise.all([fetchTask(), fetchTimeline()]);
+                },
+              })
+            }
+            onReject={() =>
+              setConfirm({
+                open: true,
+                title: 'Reject this task?',
+                action: async () => {
+                  await api.post(`/tasks/${id}/reject`);
+                  await Promise.all([fetchTask(), fetchTimeline()]);
+                },
+              })
+            }
+            onForward={() => setShowForwardDialog(true)}
+            onComplete={() =>
+              setConfirm({
+                open: true,
+                title: 'Submit for approval?',
+                action: async () => handleComplete(),
+              })
+            }
+            onStart={() => handleStatusChange('in_progress')}
+            onBackToOpen={() => handleStatusChange('open')}
+          />
+
+          {/* Forward Path */}
+          {task.nodes && task.nodes.length > 0 && (
+            <div className="rounded-2xl p-6 bg-slate-800/60 backdrop-blur-sm border border-slate-700">
+              <h3 className="text-sm font-semibold text-slate-200 mb-4">Forward Path</h3>
+              <ul className="divide-y divide-slate-700">
+                {task.nodes.map((node) => (
+                  <li key={node.id} className="py-3">
+                    <div className="flex items-center justify-between">
+                      <div className="text-slate-200">
+                        <span className="font-medium">{node.fromUser?.name}</span>
+                        <span className="mx-2 text-slate-400">→</span>
+                        <span className="font-medium">{node.toUser?.name}</span>
+                      </div>
+                      <span className="text-xs text-slate-400">
+                        {format(new Date(node.forwardedAt), 'MMM d, h:mm a')}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Approval Queue */}
+          {task.approvers && task.approvers.length > 0 && (
+            <div className="rounded-2xl p-6 bg-slate-800/60 backdrop-blur-sm border border-slate-700">
+              <h3 className="text-sm font-semibold text-slate-200 mb-4">Approval Queue</h3>
+              <ul className="divide-y divide-slate-700">
+                {task.approvers.map((approver) => (
+                  <li key={approver.id} className="py-3">
+                    <div className="flex items-center justify-between">
+                      <div className="text-slate-200">
+                        <span className="font-medium">Level {approver.levelOrder}:</span>
+                        <span className="ml-2">{approver.approver?.name}</span>
+                      </div>
+                      <Badge variant={approver.status} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
+
+        {/* Right: 4/12 */}
+        <aside className="col-span-12 md:col-span-4 space-y-4">
+          <div className="sticky top-20">
+            <CommentsPanel
+              taskId={task.id}
+              comments={task.comments || []}
+              commentValue={comment}
+              onChangeComment={setComment}
+              onSubmit={async (value) => {
+                if (!value.trim()) return;
+                await api.post(`/tasks/${id}/comments`, { content: value });
+                setComment('');
+                await fetchTask();
+              }}
+              headerExtras={<Badge variant={approvalBadgeVariant} />}
+            />
+          </div>
+          <div className="sticky top-[calc(20px+380px)]">
+            <TimelinePanel items={timeline} />
+          </div>
+        </aside>
+      </div>
+
+      {/* Forward Dialog */}
+      {showForwardDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-2xl w-full max-w-md">
+            <h3 className="text-lg font-semibold text-slate-200 mb-4">Forward Task</h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Select user to forward to:
+              </label>
+              <select
+                className="w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                value={forwardUserId}
+                onChange={(e) => setForwardUserId(e.target.value)}
+              >
+                <option value="">Select user</option>
+                {users
+                  .filter((u) => u.id !== currentUser?.id)
+                  .map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name} ({u.email})
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowForwardDialog(false);
+                  setForwardUserId('');
+                }}
+                className="px-4 py-2 rounded-md border border-slate-600 text-slate-200 hover:bg-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  await handleForward();
+                  setShowForwardDialog(false);
+                }}
+                disabled={!forwardUserId}
+                className="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Forward
+              </button>
             </div>
           </div>
         </div>
-      </div>
-    </Layout>
+      )}
+
+      {/* Confirm modal */}
+      <ModalConfirm
+        isOpen={confirm.open}
+        title={confirm.title || 'Are you sure?'}
+        onCancel={() => setConfirm({ open: false })}
+        onConfirm={async () => {
+          if (confirm.action) await confirm.action();
+          setConfirm({ open: false });
+        }}
+      />
+    </div>
   );
 };
 
