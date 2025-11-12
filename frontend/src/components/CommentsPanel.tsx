@@ -26,13 +26,13 @@ export default function CommentsPanel({
     []
   );
   return (
-    <section className="rounded-2xl p-6 bg-slate-800/60 backdrop-blur-sm border border-slate-700">
-      <header className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-200">Comments</h3>
-        <div className="flex items-center gap-2">{headerExtras}</div>
+    <section className="rounded-2xl border border-slate-700 bg-slate-800/60 p-4 sm:p-6 backdrop-blur-sm">
+      <header className="flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold text-slate-200 leading-none">Comments</h3>
+        <div className="ml-auto flex items-center gap-2">{headerExtras}</div>
       </header>
-      <div className="mt-4 space-y-4">
-        <div className="rounded-lg border border-slate-600 bg-slate-900 p-3">
+      <div className="mt-3 sm:mt-4 space-y-4">
+        <div className="rounded-lg border border-slate-600 bg-slate-900 p-2.5 sm:p-3">
           <textarea
             aria-label="Add a comment"
             placeholder={placeholder}

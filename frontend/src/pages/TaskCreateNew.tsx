@@ -405,26 +405,21 @@ const TaskCreateNew = () => {
                   </select>
                 </div>
 
-                <div className="sm:col-span-2">
+                <div>
                   <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-                    Approval Type
+                    Priority
                   </label>
                   <select
-                    name="approvalType"
-                    value={formData.approvalType}
-                    onChange={(event) => {
-                      handleInputChange(event);
-                      if (event.target.value !== 'specific') {
-                        setManualApprovers([]);
-                      }
-                    }}
+                    name="priorityFlag"
+                    value={formData.priorityFlag}
+                    onChange={handleInputChange}
                     className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                   >
-                    <option value="360">360° approval (auto route)</option>
-                    <option value="specific">Specific approvers</option>
-                    <option value="predefined" disabled>
-                      Predefined template (coming soon)
-                    </option>
+                    {TASK_FLAGS.map((flag) => (
+                      <option key={flag} value={flag}>
+                        {flag.replace(/_/g, ' ').toLowerCase()}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -473,50 +468,7 @@ const TaskCreateNew = () => {
             </div>
           </SectionCard>
 
-          <SectionCard title="Priority & Flags" subtitle="Call attention to what matters most.">
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                  Priority Flag
-                </p>
-                <div className="mt-2 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
-                  {TASK_FLAGS.map((flag) => (
-                    <button
-                      key={flag}
-                      type="button"
-                      onClick={() =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          priorityFlag: flag,
-                        }))
-                      }
-                      className={`flex items-center justify-center rounded-lg border px-3 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-indigo-200 ${
-                        formData.priorityFlag === flag
-                          ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-900/30 dark:text-indigo-300'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-300 hover:bg-indigo-50/60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
-                      }`}
-                    >
-                      {flag.replace(/_/g, ' ')}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-                  Priority Notes
-                </label>
-                <textarea
-                  name="priorityNotes"
-                  value={formData.priorityNotes}
-                  onChange={handleInputChange}
-                  rows={3}
-                  placeholder="Why is this urgent or blocked?"
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                />
-              </div>
-            </div>
-          </SectionCard>
+          {/* Priority now lives inside Task Details as a dropdown */}
 
           <SectionCard
             title="Schedule & Recurrence"
@@ -774,27 +726,53 @@ const TaskCreateNew = () => {
             )}
           </SectionCard>
 
-          <SectionCard title="Approvals Workflow">
+          <SectionCard title="Approvals Workflow" subtitle="Choose the flow and, if needed, add approvers." >
             <div className="space-y-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+                    Approval Type
+                  </label>
+                  <select
+                    name="approvalType"
+                    value={formData.approvalType}
+                    onChange={(event) => {
+                      handleInputChange(event);
+                      if (event.target.value !== 'specific') {
+                        setManualApprovers([]);
+                      }
+                    }}
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                  >
+                    <option value="360">360° approval (auto route)</option>
+                    <option value="specific">Specific approvers</option>
+                    <option value="predefined" disabled>
+                      Predefined template (coming soon)
+                    </option>
+                  </select>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    360 — routes approval in reverse of forward path.
+                  </p>
+                </div>
+                {formData.approvalType === 'specific' && (
+                  <button
+                    type="button"
+                    onClick={addManualApprover}
+                    className="inline-flex items-center self-start rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+                  >
+                    + Add approver
+                  </button>
+                )}
+              </div>
+
               {formData.approvalType === 'specific' && (
                 <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 dark:border-indigo-800/40 dark:bg-indigo-900/20">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h4 className="text-sm font-semibold text-indigo-600 dark:text-indigo-300">
-                        Approval levels
-                      </h4>
-                      <p className="mt-1 text-xs text-indigo-500 dark:text-indigo-400">
-                        Define who approves and in what order.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={addManualApprover}
-                      className="inline-flex items-center rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700"
-                    >
-                      + Add approver
-                    </button>
-                  </div>
+                  <h4 className="text-sm font-semibold text-indigo-600 dark:text-indigo-300">
+                    Approval levels
+                  </h4>
+                  <p className="mt-1 text-xs text-indigo-500 dark:text-indigo-400">
+                    Define who approves and in what order.
+                  </p>
 
                   <div className="mt-4 space-y-3">
                     {manualApprovers.length === 0 && (
