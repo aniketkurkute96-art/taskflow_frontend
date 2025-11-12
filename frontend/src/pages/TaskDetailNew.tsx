@@ -583,49 +583,58 @@ const TaskDetailNew = () => {
           <div className="sticky top-[calc(20px+380px)]">
             <TimelinePanel items={timeline} />
           </div>
-
-          {showForward && (
-            <SectionCard title="Forward Task" subtitle="Send this task to another teammate.">
-              <div className="space-y-3">
-                <select
-                  value={forwardUserId}
-                  onChange={(event) => setForwardUserId(event.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                >
-                  <option value="">Select teammate…</option>
-                  {users
-                    .filter((option) => option.id !== user?.id)
-                    .map((option) => (
-                      <option key={option.id} value={option.id}>
-                        {option.name} ({option.email})
-                      </option>
-                    ))}
-                </select>
-                <div className="flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowForward(false);
-                      setForwardUserId('');
-                    }}
-                    className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700 dark:border-slate-700 dark:text-slate-300 dark:hover:border-slate-600"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleForwardTask}
-                    disabled={forwardBusy || !forwardUserId}
-                    className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {forwardBusy ? 'Forwarding…' : 'Forward'}
-                  </button>
-                </div>
-              </div>
-            </SectionCard>
-          )}
         </aside>
       </main>
+
+      {showForward && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-slate-100">Forward Task</h3>
+            <p className="mt-1 text-sm text-slate-400">
+              Send this task to another teammate and build the forward path.
+            </p>
+            <div className="mt-4 space-y-3">
+              <label className="block text-sm font-medium text-slate-300">
+                Select teammate
+              </label>
+              <select
+                value={forwardUserId}
+                onChange={(event) => setForwardUserId(event.target.value)}
+                className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+              >
+                <option value="">Select teammate…</option>
+                {users
+                  .filter((option) => option.id !== user?.id)
+                  .map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.name} ({option.email})
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForward(false);
+                  setForwardUserId('');
+                }}
+                className="rounded-md border border-slate-600 px-4 py-2 text-sm text-slate-200 transition hover:bg-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleForwardTask}
+                disabled={forwardBusy || !forwardUserId}
+                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {forwardBusy ? 'Forwarding…' : 'Forward'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -69,35 +69,53 @@ export default function ActionButtons({
               >
                 {task.status === 'in_progress' && (
                   <>
+                    <div className="px-3 py-2 text-xs uppercase tracking-wide text-slate-500">
+                      Assignee actions
+                    </div>
                     <button
                       onClick={() => { setMenuOpen(false); onForward(); }}
-                      className="w-full rounded px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-700"
+                      className="inline-flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-slate-200 transition hover:bg-slate-700"
                     >
+                      <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
                       Forward…
                     </button>
                     <button
                       onClick={() => { setMenuOpen(false); onBackToOpen(); }}
-                      className="w-full rounded px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-700"
+                      className="inline-flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-slate-200 transition hover:bg-slate-700"
                     >
+                      <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
                       Mark Back to Open
                     </button>
                   </>
                 )}
                 {task.status === 'pending_approval' && (
-                  <button
-                    onClick={() => { setMenuOpen(false); onReject(); }}
-                    className="w-full rounded px-3 py-2 text-left text-sm text-slate-900 bg-amber-500/90 hover:bg-amber-500"
-                  >
-                    Request Changes…
-                  </button>
+                  <>
+                    <div className="px-3 py-2 text-xs uppercase tracking-wide text-slate-500">
+                      Approver actions
+                    </div>
+                    <button
+                      onClick={() => { setMenuOpen(false); onReject(); }}
+                      className="inline-flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-slate-900 transition hover:bg-amber-500/80"
+                      style={{ backgroundColor: 'rgba(245, 158, 11, 0.2)' }}
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                      Request Changes…
+                    </button>
+                  </>
                 )}
                 {task.status === 'open' && (
-                  <button
-                    onClick={() => { setMenuOpen(false); onForward(); }}
-                    className="w-full rounded px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-700"
-                  >
-                    Forward…
-                  </button>
+                  <>
+                    <div className="px-3 py-2 text-xs uppercase tracking-wide text-slate-500">
+                      Available actions
+                    </div>
+                    <button
+                      onClick={() => { setMenuOpen(false); onForward(); }}
+                      className="inline-flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-slate-200 transition hover:bg-slate-700"
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+                      Forward…
+                    </button>
+                  </>
                 )}
               </div>
             </>

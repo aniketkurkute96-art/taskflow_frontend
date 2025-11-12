@@ -423,24 +423,6 @@ const TaskCreateNew = () => {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-                    Priority
-                  </label>
-                  <select
-                    name="priorityFlag"
-                    value={formData.priorityFlag}
-                    onChange={handleInputChange}
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                  >
-                    {TASK_FLAGS.map((flag) => (
-                      <option key={flag} value={flag}>
-                        {flag.replace(/_/g, ' ').toLowerCase()}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
                 {/* Start and Due in a single row */}
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
