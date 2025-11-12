@@ -2,6 +2,7 @@ import { ReactNode, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Outlet, useNavigate } from 'react-router-dom';
 import ProjectsSidebar from '../sidebar/ProjectsSidebar';
+import ThemeToggle from '../ThemeToggle';
 
 interface AppShellProps {
   header?: ReactNode;
@@ -45,7 +46,9 @@ const AppShell = ({ header, sidebar, children }: AppShellProps) => {
           )}
 
           {/* User Profile Section */}
-          <div className="relative">
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -117,6 +120,7 @@ const AppShell = ({ header, sidebar, children }: AppShellProps) => {
                 </div>
               </>
             )}
+            </div>
           </div>
         </div>
       </header>
