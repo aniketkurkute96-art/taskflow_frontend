@@ -39,25 +39,13 @@ const AppShell = ({ header, sidebar, children }: AppShellProps) => {
           <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:border-slate-700 dark:bg-slate-900/80">
             <div className="flex w-full items-center justify-between px-4 py-3">
               {header ?? (
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => navigate('/workspace')}
-                    className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-                    title="Home"
-                  >
-                    <svg className="h-4 w-4 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5m4-11l5 5m-6 6h5a1 1 0 001-1V10M10 21v-6a1 1 0 011-1h2a1 1 0 011 1v6" />
-                    </svg>
-                    Home
-                  </button>
-                  <button
-                    onClick={() => navigate('/workspace')}
-                    className="hidden sm:inline text-sm font-semibold text-slate-600 transition hover:text-slate-800 dark:text-slate-300 dark:hover:text-slate-200"
-                    title="Go to workspace"
-                  >
-                    Nagrik TaskFlow
-                  </button>
-                </div>
+                <button
+                  onClick={() => navigate('/workspace')}
+                  className="text-sm font-semibold text-slate-600 transition hover:text-slate-800 dark:text-slate-300 dark:hover:text-slate-200"
+                  title="Go to workspace"
+                >
+                  Nagrik TaskFlow
+                </button>
               )}
               
               {/* User Profile Section */}

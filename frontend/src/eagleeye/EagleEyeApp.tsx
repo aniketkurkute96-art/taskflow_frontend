@@ -5,6 +5,7 @@ import Signup from '../pages/Signup';
 import { useAuth } from '../contexts/AuthContext';
 import AppShell from '../components/shell/AppShell';
 import EagleEyeHome from './EagleEyeHome';
+import ProjectsSidebar from '../components/sidebar/ProjectsSidebar';
 import ApprovalBucket from '../pages/ApprovalBucket';
 import WaitingOn from '../pages/WaitingOn';
 import TaskDetailNew from '../pages/TaskDetailNew';
@@ -36,7 +37,7 @@ const EagleEyeApp = () => {
           path="/workspace"
           element={
             <PrivateRoute>
-              <AppShell>
+              <AppShell sidebar={<ProjectsSidebar />}>
                 <EagleEyeHome />
               </AppShell>
             </PrivateRoute>
@@ -46,7 +47,7 @@ const EagleEyeApp = () => {
           path="/approval-bucket"
           element={
             <PrivateRoute>
-              <AppShell>
+              <AppShell sidebar={<ProjectsSidebar />}>
                 <ApprovalBucket />
               </AppShell>
             </PrivateRoute>
@@ -56,7 +57,7 @@ const EagleEyeApp = () => {
           path="/waiting-on"
           element={
             <PrivateRoute>
-              <AppShell>
+              <AppShell sidebar={<ProjectsSidebar />}>
                 <WaitingOn />
               </AppShell>
             </PrivateRoute>
@@ -66,7 +67,7 @@ const EagleEyeApp = () => {
           path="/tasks/create"
           element={
             <PrivateRoute>
-              <AppShell>
+              <AppShell sidebar={<ProjectsSidebar />}>
                 <TaskCreateNew />
               </AppShell>
             </PrivateRoute>
@@ -76,7 +77,7 @@ const EagleEyeApp = () => {
           path="/tasks/:id"
           element={
             <PrivateRoute>
-              <AppShell>
+              <AppShell sidebar={<ProjectsSidebar />}>
                 <TaskDetailNew />
               </AppShell>
             </PrivateRoute>
@@ -86,7 +87,7 @@ const EagleEyeApp = () => {
           path="/tasks/:id/edit"
           element={
             <PrivateRoute>
-              <AppShell>
+              <AppShell sidebar={<ProjectsSidebar />}>
                 <TaskEdit />
               </AppShell>
             </PrivateRoute>
@@ -96,7 +97,7 @@ const EagleEyeApp = () => {
           path="/admin/users"
           element={
             <AdminRoute>
-              <AppShell>
+              <AppShell sidebar={<ProjectsSidebar />}>
                 <AdminPanel />
               </AppShell>
             </AdminRoute>
