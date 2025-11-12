@@ -594,114 +594,255 @@ const TaskCreateNew = () => {
 
                 {/* Approval Type + Manual Approvers inline */}
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                     Approval Type
                   </label>
-                  <select
-                    name="approvalType"
-                    value={formData.approvalType}
-                    onChange={(event) => {
-                      handleInputChange(event);
-                      if (event.target.value !== 'specific') {
-                        setManualApprovers([]);
-                      }
-                    }}
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                  >
-                    <option value="360">360° approval (auto route)</option>
-                    <option value="specific">Specific approvers</option>
-                    <option value="predefined" disabled>
-                      Predefined template (coming soon)
-                    </option>
-                  </select>
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    360 — routes approval in reverse of forward path.
-                  </p>
+                  <div className="mt-2 space-y-2.5">
+                    {/* 360 Approval Option */}
+                    <label className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-3.5 transition-all duration-150 ${
+                      formData.approvalType === '360'
+                        ? 'border-violet-500 bg-violet-50/60 shadow-sm dark:border-violet-400 dark:bg-violet-900/20'
+                        : 'border-slate-200 bg-white hover:border-violet-300 dark:border-slate-700 dark:bg-slate-900/50 dark:hover:border-violet-600'
+                    }`}>
+                      <input
+                        type="radio"
+                        name="approvalType"
+                        value="360"
+                        checked={formData.approvalType === '360'}
+                        onChange={(event) => {
+                          handleInputChange(event);
+                          setManualApprovers([]);
+                        }}
+                        className="mt-0.5 h-4 w-4 flex-shrink-0 border-slate-300 text-violet-600 focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            360° Approval
+                          </span>
+                          <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
+                            Auto
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+                          Automatically routes approval requests in reverse order of the forward path.
+                        </p>
+                      </div>
+                    </label>
+
+                    {/* Specific Approvers Option */}
+                    <label className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-3.5 transition-all duration-150 ${
+                      formData.approvalType === 'specific'
+                        ? 'border-violet-500 bg-violet-50/60 shadow-sm dark:border-violet-400 dark:bg-violet-900/20'
+                        : 'border-slate-200 bg-white hover:border-violet-300 dark:border-slate-700 dark:bg-slate-900/50 dark:hover:border-violet-600'
+                    }`}>
+                      <input
+                        type="radio"
+                        name="approvalType"
+                        value="specific"
+                        checked={formData.approvalType === 'specific'}
+                        onChange={handleInputChange}
+                        className="mt-0.5 h-4 w-4 flex-shrink-0 border-slate-300 text-violet-600 focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            Specific Approvers
+                          </span>
+                          <span className="rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-300">
+                            Manual
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+                          Manually select reviewers and define the approval order.
+                        </p>
+                      </div>
+                    </label>
+
+                    {/* Predefined Template Option */}
+                    <label className="flex cursor-not-allowed items-start gap-3 rounded-xl border-2 border-slate-200 bg-slate-50/50 p-3.5 opacity-50 dark:border-slate-700 dark:bg-slate-900/30">
+                      <input
+                        type="radio"
+                        name="approvalType"
+                        value="predefined"
+                        disabled
+                        className="mt-0.5 h-4 w-4 flex-shrink-0 border-slate-300 text-slate-400"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                            Predefined Template
+                          </span>
+                          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600 dark:bg-slate-700 dark:text-slate-400">
+                            Soon
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-500">
+                          Use admin-defined templates based on department, amount, or task type.
+                        </p>
+                      </div>
+                    </label>
+                  </div>
                 </div>
                 {formData.approvalType === 'specific' && (
-                  <div className="sm:col-span-2 rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 dark:border-indigo-800/40 dark:bg-indigo-900/20">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h4 className="text-sm font-semibold text-indigo-600 dark:text-indigo-300">
-                          Approval levels
-                        </h4>
-                        <p className="mt-1 text-xs text-indigo-500 dark:text-indigo-400">
-                          Define who approves and in what order.
+                  <div className="sm:col-span-2 rounded-xl border-2 border-violet-200 bg-gradient-to-br from-violet-50/60 to-indigo-50/40 p-5 shadow-sm dark:border-violet-800/50 dark:from-violet-900/20 dark:to-indigo-900/20">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <svg className="h-5 w-5 text-violet-600 dark:text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <h4 className="text-sm font-bold text-violet-900 dark:text-violet-200">
+                            Approval Chain
+                          </h4>
+                        </div>
+                        <p className="mt-1.5 text-xs leading-relaxed text-violet-700/80 dark:text-violet-300/80">
+                          Define reviewers in sequence. Lower level numbers are reviewed first.
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={addManualApprover}
-                        className="inline-flex items-center rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-all duration-150 hover:bg-violet-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:bg-violet-500 dark:hover:bg-violet-600"
                       >
-                        + Add approver
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Add Approver
                       </button>
                     </div>
+
                     <div className="mt-4 space-y-3">
-                      {manualApprovers.length === 0 && (
-                        <p className="rounded-lg border border-dashed border-indigo-200 px-3 py-4 text-center text-sm text-indigo-500 dark:border-indigo-700 dark:text-indigo-300">
-                          No approvers yet. Add the first reviewer to get started.
-                        </p>
-                      )}
-                      {manualApprovers.map((approver) => (
-                        <div
-                          key={approver.id}
-                          className="rounded-lg border border-indigo-200 bg-white px-3 py-3 shadow-sm dark:border-indigo-700 dark:bg-slate-900"
-                        >
-                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                            <div className="flex flex-1 flex-col gap-3 sm:flex-row">
-                              <div className="flex-1">
-                                <label className="text-xs font-medium uppercase tracking-wide text-indigo-500">
-                                  Approver
-                                </label>
-                                <select
-                                  value={approver.approverUserId}
-                                  onChange={(event) =>
-                                    updateManualApprover(
-                                      approver.id,
-                                      'approverUserId',
-                                      event.target.value
-                                    )
-                                  }
-                                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                                >
-                                  <option value="">Select approver…</option>
-                                  {users.map((user) => (
-                                    <option key={user.id} value={user.id}>
-                                      {user.name}
-                                    </option>
-                                  ))}
-                                </select>
+                      {manualApprovers.length === 0 ? (
+                        <div className="rounded-xl border-2 border-dashed border-violet-300 bg-white/50 px-4 py-8 text-center dark:border-violet-700/50 dark:bg-slate-900/30">
+                          <svg className="mx-auto h-10 w-10 text-violet-400 dark:text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                          </svg>
+                          <p className="mt-3 text-sm font-medium text-violet-900 dark:text-violet-200">
+                            No approvers added yet
+                          </p>
+                          <p className="mt-1 text-xs text-violet-600 dark:text-violet-400">
+                            Click "Add Approver" to build your approval chain
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          {/* Approval Chain Preview */}
+                          {manualApprovers.length > 0 && (
+                            <div className="rounded-lg border border-violet-200 bg-white/70 p-3 backdrop-blur-sm dark:border-violet-700/50 dark:bg-slate-900/50">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400">
+                                  Preview
+                                </span>
+                                <div className="h-px flex-1 bg-gradient-to-r from-violet-300 to-transparent dark:from-violet-700"></div>
                               </div>
-                              <div className="w-full sm:w-32">
-                                <label className="text-xs font-medium uppercase tracking-wide text-indigo-500">
-                                  Level
-                                </label>
-                                <input
-                                  type="number"
-                                  min={1}
-                                  value={approver.levelOrder}
-                                  onChange={(event) =>
-                                    updateManualApprover(
-                                      approver.id,
-                                      'levelOrder',
-                                      Number(event.target.value) || 1
-                                    )
-                                  }
-                                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                                />
+                              <div className="mt-2 flex flex-wrap items-center gap-2">
+                                {[...manualApprovers]
+                                  .sort((a, b) => a.levelOrder - b.levelOrder)
+                                  .map((approver, index) => {
+                                    const user = users.find((u) => u.id === approver.approverUserId);
+                                    return (
+                                      <div key={approver.id} className="flex items-center gap-2">
+                                        <div className="group relative flex items-center gap-2 rounded-full bg-violet-100 px-3 py-1.5 text-xs font-medium text-violet-900 dark:bg-violet-900/40 dark:text-violet-200">
+                                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-600 text-[10px] font-bold text-white dark:bg-violet-500">
+                                            {approver.levelOrder}
+                                          </span>
+                                          <span className="max-w-[120px] truncate">
+                                            {user ? user.name : 'Select user'}
+                                          </span>
+                                        </div>
+                                        {index < manualApprovers.length - 1 && (
+                                          <svg className="h-4 w-4 text-violet-400 dark:text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                          </svg>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
                               </div>
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => removeManualApprover(approver.id)}
-                              className="inline-flex items-center rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-500 transition hover:border-red-300 hover:text-red-600 dark:border-slate-700 dark:text-slate-400 dark:hover:border-red-400 dark:hover:text-red-300"
+                          )}
+
+                          {/* Approver Cards */}
+                          {manualApprovers.map((approver, index) => (
+                            <div
+                              key={approver.id}
+                              className="group rounded-xl border border-violet-200 bg-white p-4 shadow-sm transition-all duration-150 hover:shadow-md dark:border-violet-700/50 dark:bg-slate-900/70"
                             >
-                              Remove
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+                                {/* Level Badge */}
+                                <div className="flex items-center gap-3 sm:flex-col sm:items-center sm:gap-2">
+                                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-sm font-bold text-white shadow-md">
+                                    {approver.levelOrder}
+                                  </div>
+                                  <span className="text-xs font-medium text-violet-600 dark:text-violet-400 sm:text-center">
+                                    Level {approver.levelOrder}
+                                  </span>
+                                </div>
+
+                                {/* Approver Selection */}
+                                <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-start">
+                                  <div className="flex-1">
+                                    <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400">
+                                      Approver
+                                    </label>
+                                    <select
+                                      value={approver.approverUserId}
+                                      onChange={(event) =>
+                                        updateManualApprover(
+                                          approver.id,
+                                          'approverUserId',
+                                          event.target.value
+                                        )
+                                      }
+                                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm transition-all duration-150 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-violet-500"
+                                    >
+                                      <option value="">Select approver…</option>
+                                      {users.map((user) => (
+                                        <option key={user.id} value={user.id}>
+                                          {user.name} · {user.email}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+
+                                  <div className="w-full sm:w-28">
+                                    <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400">
+                                      Order
+                                    </label>
+                                    <input
+                                      type="number"
+                                      min={1}
+                                      value={approver.levelOrder}
+                                      onChange={(event) =>
+                                        updateManualApprover(
+                                          approver.id,
+                                          'levelOrder',
+                                          Number(event.target.value) || 1
+                                        )
+                                      }
+                                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-center text-sm text-slate-900 shadow-sm transition-all duration-150 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-violet-500"
+                                    />
+                                  </div>
+                                </div>
+
+                                {/* Remove Button */}
+                                <button
+                                  type="button"
+                                  onClick={() => removeManualApprover(approver.id)}
+                                  className="inline-flex items-center gap-1.5 self-start rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-600 shadow-sm transition-all duration-150 hover:border-red-300 hover:bg-red-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:border-red-800/50 dark:bg-slate-800 dark:text-red-400 dark:hover:border-red-700 dark:hover:bg-red-900/20"
+                                  title="Remove this approver"
+                                >
+                                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                  Remove
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
