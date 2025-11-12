@@ -33,76 +33,29 @@ const EagleEyeApp = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/test-login" element={<TestLogin />} />
+        {/* Persistent AppShell wrapper for all EagleEye routes */}
         <Route
-          path="/workspace"
           element={
             <PrivateRoute>
-              <AppShell sidebar={<ProjectsSidebar />}>
-                <EagleEyeHome />
-              </AppShell>
+              <AppShell />
             </PrivateRoute>
           }
-        />
-        <Route
-          path="/approval-bucket"
-          element={
-            <PrivateRoute>
-              <AppShell sidebar={<ProjectsSidebar />}>
-                <ApprovalBucket />
-              </AppShell>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/waiting-on"
-          element={
-            <PrivateRoute>
-              <AppShell sidebar={<ProjectsSidebar />}>
-                <WaitingOn />
-              </AppShell>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/tasks/create"
-          element={
-            <PrivateRoute>
-              <AppShell sidebar={<ProjectsSidebar />}>
-                <TaskCreateNew />
-              </AppShell>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/tasks/:id"
-          element={
-            <PrivateRoute>
-              <AppShell sidebar={<ProjectsSidebar />}>
-                <TaskDetailNew />
-              </AppShell>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/tasks/:id/edit"
-          element={
-            <PrivateRoute>
-              <AppShell sidebar={<ProjectsSidebar />}>
-                <TaskEdit />
-              </AppShell>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin/users"
-          element={
-            <AdminRoute>
-              <AppShell sidebar={<ProjectsSidebar />}>
+        >
+          <Route path="/workspace" element={<EagleEyeHome />} />
+          <Route path="/approval-bucket" element={<ApprovalBucket />} />
+          <Route path="/waiting-on" element={<WaitingOn />} />
+          <Route path="/tasks/create" element={<TaskCreateNew />} />
+          <Route path="/tasks/:id" element={<TaskDetailNew />} />
+          <Route path="/tasks/:id/edit" element={<TaskEdit />} />
+          <Route
+            path="/admin/users"
+            element={
+              <AdminRoute>
                 <AdminPanel />
-              </AppShell>
-            </AdminRoute>
-          }
-        />
+              </AdminRoute>
+            }
+          />
+        </Route>
         <Route path="*" element={<Navigate to="/workspace" replace />} />
       </Routes>
     </Router>
