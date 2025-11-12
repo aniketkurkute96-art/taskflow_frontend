@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
+import { ChevronDown, CheckCircle2, Loader2 } from 'lucide-react';
 import Timeline from '../components/Timeline';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -114,6 +115,28 @@ const statusBadgeStyles: Record<string, string> = {
   rejected: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
 };
 
+const statusAccentStyles: Record<string, string> = {
+  open: 'bg-blue-400',
+  in_progress: 'bg-amber-400',
+  pending_approval: 'bg-purple-400',
+  approved: 'bg-emerald-400',
+  rejected: 'bg-rose-400',
+};
+
+const STATUS_PILL_BASE =
+  'inline-flex items-center gap-3 rounded-full px-3.5 py-1.5 text-xs font-semibold shadow-sm ring-1 ring-slate-900/10 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-400 dark:ring-white/10';
+
+const STATUS_OPTIONS = [
+  { value: 'open', label: 'Open', description: 'Task yet to start' },
+  { value: 'in_progress', label: 'In Progress', description: 'Work has started' },
+  { value: 'pending_approval', label: 'Pending Approval', description: 'Waiting for reviewer sign-off' },
+  { value: 'approved', label: 'Approved', description: 'Task completed and approved' },
+  { value: 'rejected', label: 'Rejected', description: 'Changes requested' },
+] as const;
+
+const getStatusLabel = (value: string) =>
+  STATUS_OPTIONS.find((option) => option.value === value)?.label ?? value;
+
 const formatCurrency = (value?: number | null) => {
   if (value === undefined || value === null) return '—';
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
@@ -181,6 +204,8 @@ const TaskDetailNew = () => {
   const [forwardUserId, setForwardUserId] = useState('');
   const [forwardBusy, setForwardBusy] = useState(false);
   const [uploadBusy, setUploadBusy] = useState(false);
+  const [statusMenuOpen, setStatusMenuOpen] = useState(false);
+  const [statusBusy, setStatusBusy] = useState(false);
 
   const isMobile = useMemo(() => {
     if (typeof window === 'undefined') return false;
@@ -283,10 +308,34 @@ const TaskDetailNew = () => {
   const updateStatus = async (status: string) => {
     if (!id) return;
     try {
+      setStatusBusy(true);
       await api.patch(`/tasks/${id}/status`, { status });
       await Promise.all([fetchTask(), fetchTimeline()]);
     } catch (error: any) {
       alert(error.response?.data?.error || 'Failed to update status');
+    } finally {
+      setStatusBusy(false);
+    }
+  };
+
+  const handleInlineStatusChange = async (nextStatus: string) => {
+    setStatusMenuOpen(false);
+    if (!task || !id) return;
+    if (task.status === nextStatus) return;
+
+    const previousStatus = task.status;
+    setStatusBusy(true);
+    setTask((current) => (current ? { ...current, status: nextStatus } : current));
+
+    try {
+      await api.patch(`/tasks/${id}/status`, { status: nextStatus });
+      await Promise.all([fetchTask(), fetchTimeline()]);
+    } catch (error: any) {
+      setTask((current) => (current ? { ...current, status: previousStatus } : current));
+      alert(error.response?.data?.error || 'Failed to update status');
+    } finally {
+      setStatusBusy(false);
+      setStatusMenuOpen(false);
     }
   };
 
@@ -412,11 +461,102 @@ const TaskDetailNew = () => {
             title="Overview"
             right={
               <div className="flex items-center gap-2">
+                {canEdit ? (
+                  <div className="relative">
+                    <button
+                      type="button"
+                      aria-haspopup="listbox"
+                      aria-expanded={statusMenuOpen}
+                      onClick={() => setStatusMenuOpen((open) => !open)}
+                      disabled={statusBusy}
+                      className={`${STATUS_PILL_BASE} ${statusBadgeStyles[task.status] ?? 'bg-slate-200 text-slate-800 dark:bg-slate-700/70 dark:text-slate-200'} ${
+                        statusBusy ? 'cursor-wait opacity-70' : 'hover:-translate-y-[1px] hover:shadow-lg'
+                      }`}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${statusAccentStyles[task.status] ?? 'bg-slate-400'}`}
+                      />
+                      <div className="flex flex-col items-start text-left leading-tight">
+                        <span className="text-[10px] uppercase tracking-wide opacity-70">Status</span>
+                        <span className="text-sm font-semibold leading-tight">{getStatusLabel(task.status)}</span>
+                      </div>
+                      {statusBusy ? (
+                        <Loader2 className="h-4 w-4 animate-spin opacity-80" />
+                      ) : (
+                        <ChevronDown
+                          className={`h-4 w-4 transition-transform ${statusMenuOpen ? 'rotate-180 opacity-100' : 'opacity-80'}`}
+                        />
+                      )}
+                    </button>
+                    {statusMenuOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setStatusMenuOpen(false)} />
+                        <div className="absolute right-0 z-50 mt-2 w-64 overflow-hidden rounded-xl border border-slate-700 bg-slate-900/95 shadow-2xl backdrop-blur">
+                          <div className="px-4 py-2 text-[11px] uppercase tracking-wide text-slate-400">
+                            Update status
+                          </div>
+                          <div className="divide-y divide-slate-800/60">
+                            {STATUS_OPTIONS.map((option) => {
+                              const active = option.value === task.status;
+                              return (
+                                <button
+                                  key={option.value}
+                                  type="button"
+                                  disabled={statusBusy}
+                                  onClick={() => handleInlineStatusChange(option.value)}
+                                  className={`flex w-full items-start gap-3 px-4 py-3 text-left transition ${
+                                    active ? 'bg-slate-800/80 text-slate-100' : 'text-slate-300 hover:bg-slate-800/60'
+                                  } ${statusBusy ? 'cursor-wait opacity-70' : ''}`}
+                                >
+                                  <span
+                                    aria-hidden="true"
+                                    className={`mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full ${
+                                      statusAccentStyles[option.value] ?? 'bg-slate-500'
+                                    }`}
+                                  />
+                                  <div className="flex flex-1 flex-col">
+                                    <span className="text-sm font-medium leading-tight">{option.label}</span>
+                                    {option.description && (
+                                      <span className="text-xs text-slate-400">{option.description}</span>
+                                    )}
+                                  </div>
+                                  {active && <CheckCircle2 className="h-4 w-4 text-cyan-400" />}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <span
+                    className={`${STATUS_PILL_BASE} ${
+                      statusBadgeStyles[task.status] ?? 'bg-slate-200 text-slate-800 dark:bg-slate-700/70 dark:text-slate-200'
+                    }`}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${
+                        statusAccentStyles[task.status] ?? 'bg-slate-400'
+                      }`}
+                    />
+                    <div className="flex flex-col leading-tight">
+                      <span className="text-[10px] uppercase tracking-wide opacity-70">Status</span>
+                      <span className="text-sm font-semibold leading-tight">{getStatusLabel(task.status)}</span>
+                    </div>
+                  </span>
+                )}
+
                 <Badge variant={task.approvalStatus ?? 'none'} />
                 {canEdit && (
                   <button
-                    onClick={() => navigate(`/tasks/${id}/edit`)}
-                    className="px-3 py-1 rounded-md border border-violet-600 text-violet-200 hover:bg-violet-600/10 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-600"
+                    onClick={() => {
+                      setStatusMenuOpen(false);
+                      navigate(`/tasks/${id}/edit`);
+                    }}
+                    className="rounded-md border border-violet-600 px-3 py-1 text-sm font-semibold text-violet-200 transition-colors duration-200 hover:bg-violet-600/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-600"
                   >
                     Edit
                   </button>
