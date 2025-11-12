@@ -18,16 +18,16 @@ interface ColumnStore {
 }
 
 const DEFAULT_COLUMNS: ColumnConfig[] = [
-  { key: 'title', label: 'Task', visible: true, width: 360, order: 0 },
-  { key: 'status', label: 'Status', visible: true, width: 140, order: 1 },
-  { key: 'approvalStatus', label: 'Approval Status', visible: true, width: 160, order: 2 },
-  { key: 'assignee', label: 'Assignee', visible: true, width: 150, order: 3 },
-  { key: 'flag', label: 'Flag', visible: true, width: 120, order: 4 },
-  { key: 'startDate', label: 'Start Date', visible: true, width: 120, order: 5 },
-  { key: 'dueDate', label: 'End Date', visible: true, width: 120, order: 6 },
-  { key: 'project', label: 'Project', visible: false, width: 140, order: 7 },
-  { key: 'updatedAt', label: 'Updated', visible: true, width: 160, order: 8 },
-  { key: 'actions', label: 'Actions', visible: true, width: 140, order: 9 },
+  { key: 'title', label: 'Task', visible: true, width: 480, order: 0 },
+  { key: 'status', label: 'Status', visible: true, width: 160, order: 1 },
+  { key: 'approvalStatus', label: 'Approval Status', visible: true, width: 180, order: 2 },
+  { key: 'assignee', label: 'Assignee', visible: true, width: 180, order: 3 },
+  { key: 'flag', label: 'Flag', visible: true, width: 140, order: 4 },
+  { key: 'startDate', label: 'Start Date', visible: true, width: 140, order: 5 },
+  { key: 'dueDate', label: 'End Date', visible: true, width: 140, order: 6 },
+  { key: 'project', label: 'Project', visible: false, width: 160, order: 7 },
+  { key: 'updatedAt', label: 'Updated', visible: true, width: 180, order: 8 },
+  { key: 'actions', label: 'Actions', visible: true, width: 160, order: 9 },
 ];
 
 export const useColumnStore = create<ColumnStore>()(

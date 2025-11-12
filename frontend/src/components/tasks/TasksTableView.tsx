@@ -973,11 +973,11 @@ const TasksTableView = () => {
 
       <div
         ref={tableContainerRef}
-        className="flex-1 overflow-auto overflow-x-auto px-4 pb-6 pt-4 sm:px-6"
-        style={{ contain: 'paint' }}
+        className="flex-1 overflow-auto px-4 pb-6 pt-4 sm:px-6"
+        style={{ contain: 'paint', overflowX: 'auto' }}
       >
         <div className="rounded-2xl border border-slate-700/80 bg-slate-800/40 shadow-xl shadow-cyan-900/20">
-          <table className="min-w-[1200px] text-sm text-slate-200">
+          <table className="w-full min-w-[1600px] text-sm text-slate-200">
             <thead className="sticky top-0 z-10 bg-slate-900/90 backdrop-blur-md">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
