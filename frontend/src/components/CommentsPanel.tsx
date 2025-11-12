@@ -12,6 +12,7 @@ interface CommentsPanelProps {
   onChangeComment: (v: string) => void;
   onSubmit: (value: string) => void | Promise<void>;
   headerExtras?: React.ReactNode;
+  isSubmitting?: boolean;
 }
 
 export default function CommentsPanel({
@@ -20,6 +21,7 @@ export default function CommentsPanel({
   onChangeComment,
   onSubmit,
   headerExtras,
+  isSubmitting = false,
 }: CommentsPanelProps) {
   const placeholder = useMemo(
     () => 'Share progress, ask questions, or mention teammate (@name)',
@@ -46,10 +48,12 @@ export default function CommentsPanel({
               Supports basic markdown: <b>bold</b>, <i>italic</i>
             </div>
             <button
+              type="button"
+              disabled={isSubmitting || !commentValue.trim()}
               onClick={() => onSubmit(commentValue)}
-              className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-400"
+              className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-400 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Post
+              {isSubmitting ? 'Posting…' : 'Post'}
             </button>
           </div>
         </div>

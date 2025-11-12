@@ -290,12 +290,12 @@ const TaskDetailNew = () => {
     }
   };
 
-  const handleAddComment = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!comment.trim() || !id) return;
+  const handleAddComment = async (value?: string) => {
+    const content = (value ?? comment).trim();
+    if (!content || !id) return;
     try {
       setCommentBusy(true);
-      await api.post(`/tasks/${id}/comments`, { content: comment.trim() });
+      await api.post(`/tasks/${id}/comments`, { content });
       setComment('');
       await fetchTimeline();
     } catch (error) {
@@ -579,6 +579,7 @@ const TaskDetailNew = () => {
                   commentValue={comment}
                   onChangeComment={setComment}
                   onSubmit={handleAddComment}
+                  isSubmitting={commentBusy}
                   headerExtras={<Badge variant={task.approvalStatus ?? 'none'} />}
                 />
               </section>
