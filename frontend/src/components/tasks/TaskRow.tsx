@@ -199,13 +199,13 @@ const TaskRow = ({ task, columns }: TaskRowProps) => {
   return (
     <div
       onClick={handleClick}
-      className="flex items-center border-b border-slate-200 bg-white px-4 py-2.5 transition-colors hover:bg-slate-50 cursor-pointer dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700/50"
+      className="flex items-center border-b border-slate-200 bg-white px-4 py-3 transition-colors hover:bg-slate-50 cursor-pointer dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700/50 min-w-[1400px]"
     >
       {columns.map((column) => (
         <div
           key={column.key}
-          style={{ width: column.width }}
-          className="px-2 overflow-hidden"
+          style={{ width: column.width, minWidth: column.width, maxWidth: column.width }}
+          className="px-3 overflow-hidden flex-shrink-0"
         >
           {renderCell(column.key)}
         </div>

@@ -158,13 +158,13 @@ const TasksListView = ({ showColumnsButton = true }: TasksListViewProps) => {
       />
 
       {/* Table Header */}
-      <div className="border-b border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
-        <div className="flex items-center px-4 py-2.5">
+      <div className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/95">
+        <div className="flex items-center px-4 py-3 min-w-[1400px]">
           {visibleColumns.map((column) => (
             <div
               key={column.key}
-              style={{ width: column.width }}
-              className="px-2 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider dark:text-slate-400"
+              style={{ width: column.width, minWidth: column.width, maxWidth: column.width }}
+              className="px-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider dark:text-slate-400 flex-shrink-0"
             >
               {column.label}
             </div>
@@ -176,7 +176,7 @@ const TasksListView = ({ showColumnsButton = true }: TasksListViewProps) => {
       <div
         ref={parentRef}
         className="flex-1 overflow-auto"
-        style={{ height: '100%' }}
+        style={{ height: '100%', overflowX: 'auto' }}
       >
         {filteredTasks.length === 0 ? (
           <div className="flex h-full items-center justify-center">
@@ -209,6 +209,7 @@ const TasksListView = ({ showColumnsButton = true }: TasksListViewProps) => {
             style={{
               height: `${virtualizer.getTotalSize()}px`,
               width: '100%',
+              minWidth: '1400px',
               position: 'relative',
             }}
           >
@@ -222,6 +223,7 @@ const TasksListView = ({ showColumnsButton = true }: TasksListViewProps) => {
                     top: 0,
                     left: 0,
                     width: '100%',
+                    minWidth: '1400px',
                     height: `${virtualRow.size}px`,
                     transform: `translateY(${virtualRow.start}px)`,
                   }}
