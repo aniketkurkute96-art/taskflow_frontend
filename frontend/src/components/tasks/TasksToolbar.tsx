@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFilterStore } from '../../stores/filterStore';
 import { TASK_FLAGS } from '../../types/task';
 import type { TaskFlag } from '../../types/task';
@@ -9,23 +9,78 @@ interface TasksToolbarProps {
   showColumnsButton?: boolean;
 }
 
-const TASK_STATUSES = [
-  { value: 'open', label: 'Open', color: 'bg-blue-100 text-blue-800' },
-  { value: 'in_progress', label: 'In Progress', color: 'bg-yellow-100 text-yellow-800' },
-  { value: 'pending_approval', label: 'Pending Approval', color: 'bg-purple-100 text-purple-800' },
-  { value: 'approved', label: 'Approved', color: 'bg-green-100 text-green-800' },
-  { value: 'rejected', label: 'Rejected', color: 'bg-red-100 text-red-800' },
-];
+const STATUS_META = {
+  open: { label: 'Open', chipClass: 'bg-slate-700/70 text-slate-200' },
+  in_progress: { label: 'In Progress', chipClass: 'bg-amber-400/80 text-slate-900' },
+  pending_approval: { label: 'Pending Approval', chipClass: 'bg-violet-400/80 text-slate-900' },
+  approved: { label: 'Approved', chipClass: 'bg-emerald-300/80 text-emerald-900' },
+  rejected: { label: 'Rejected', chipClass: 'bg-rose-400/80 text-white' },
+} as const;
 
-const FLAG_LABELS: Record<TaskFlag, { label: string; icon: string }> = {
-  NONE: { label: 'None', icon: '○' },
+const FLAG_META: Record<TaskFlag, { label: string; icon: string }> = {
+  NONE: { label: 'None', icon: '•' },
   HIGH: { label: 'High Priority', icon: '⚑' },
   BLOCKED: { label: 'Blocked', icon: '⛔' },
   CLIENT_WAIT: { label: 'Client Wait', icon: '⏳' },
   INTERNAL_WAIT: { label: 'Internal Wait', icon: '🕒' },
 };
 
-const TasksToolbar = ({ users, showColumnsButton = true }: TasksToolbarProps) => {
+const DropdownCaret = ({ open }: { open: boolean }) => (
+  <svg
+    viewBox="0 0 20 20"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`}
+  >
+    <path d="M5 7.5 10 12l5-4.5" />
+  </svg>
+);
+
+const FilterChip = ({ label, onRemove }: { label: string; onRemove: () => void }) => (
+  <button
+    type="button"
+    onClick={onRemove}
+    className="inline-flex items-center gap-2 rounded-full border border-slate-600/60 bg-slate-800/60 px-3 py-1 text-xs font-medium text-slate-200 shadow-sm shadow-slate-900/40 transition hover:border-cyan-400 hover:text-cyan-200 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+  >
+    {label}
+    <span className="text-slate-400">✕</span>
+  </button>
+);
+
+const FilterButton = ({
+  label,
+  count,
+  active,
+  open,
+  onClick,
+}: {
+  label: string;
+  count: number;
+  active: boolean;
+  open: boolean;
+  onClick: () => void;
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-900 ${
+      active
+        ? 'border-cyan-500/60 bg-cyan-500/10 text-cyan-200'
+        : 'border-slate-700 bg-slate-800/60 text-slate-300 hover:border-slate-500 hover:bg-slate-800/80'
+    }`}
+  >
+    <span>{label}</span>
+    {count > 0 && (
+      <span className="rounded-full bg-cyan-500/30 px-2 py-0.5 text-xs text-cyan-100">{count}</span>
+    )}
+    <DropdownCaret open={open} />
+  </button>
+);
+
+const TasksToolbar = ({ users, showColumnsButton = false }: TasksToolbarProps) => {
   const {
     searchQuery,
     setSearchQuery,
@@ -44,227 +99,312 @@ const TasksToolbar = ({ users, showColumnsButton = true }: TasksToolbarProps) =>
     clearAllFilters,
   } = useFilterStore();
 
-  const [showStatusMenu, setShowStatusMenu] = useState(false);
-  const [showAssigneeMenu, setShowAssigneeMenu] = useState(false);
-  const [showFlagMenu, setShowFlagMenu] = useState(false);
+  const [statusOpen, setStatusOpen] = useState(false);
+  const [assigneeOpen, setAssigneeOpen] = useState(false);
+  const [flagOpen, setFlagOpen] = useState(false);
+  const searchRef = useRef<HTMLInputElement | null>(null);
 
-  const activeFilterCount =
-    selectedStatuses.length +
-    selectedAssignees.length +
-    selectedFlags.length +
-    (startDateFrom || startDateTo ? 1 : 0) +
-    (dueDateFrom || dueDateTo ? 1 : 0);
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      const isMac = navigator.platform.toUpperCase().includes('MAC');
+      if ((isMac ? event.metaKey : event.ctrlKey) && event.key.toLowerCase() === 'f') {
+        event.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  const filterChips = useMemo(() => {
+    const chips: Array<{ key: string; label: string; remove: () => void }> = [];
+
+    selectedStatuses.forEach((status) => {
+      const meta = STATUS_META[status as keyof typeof STATUS_META];
+      chips.push({
+        key: `status-${status}`,
+        label: `Status: ${meta?.label ?? status}`,
+        remove: () => toggleStatus(status),
+      });
+    });
+
+    selectedAssignees.forEach((assigneeId) => {
+      const user = users.find((candidate) => candidate.id === assigneeId);
+      chips.push({
+        key: `assignee-${assigneeId}`,
+        label: `Assignee: ${user?.name ?? assigneeId}`,
+        remove: () => toggleAssignee(assigneeId),
+      });
+    });
+
+    selectedFlags.forEach((flag) => {
+      chips.push({
+        key: `flag-${flag}`,
+        label: `Flag: ${FLAG_META[flag].label}`,
+        remove: () => toggleFlag(flag),
+      });
+    });
+
+    if (startDateFrom || startDateTo) {
+      chips.push({
+        key: 'start-range',
+        label: `Start: ${startDateFrom ?? '…'} → ${startDateTo ?? '…'}`,
+        remove: () => setStartDateRange(null, null),
+      });
+    }
+
+    if (dueDateFrom || dueDateTo) {
+      chips.push({
+        key: 'due-range',
+        label: `Due: ${dueDateFrom ?? '…'} → ${dueDateTo ?? '…'}`,
+        remove: () => setDueDateRange(null, null),
+      });
+    }
+
+    return chips;
+  }, [
+    selectedStatuses,
+    selectedAssignees,
+    selectedFlags,
+    startDateFrom,
+    startDateTo,
+    dueDateFrom,
+    dueDateTo,
+    users,
+    toggleStatus,
+    toggleAssignee,
+    toggleFlag,
+    setStartDateRange,
+    setDueDateRange,
+  ]);
+
+  const hasFilters = filterChips.length > 0;
 
   return (
-    <div className="border-b border-slate-200 bg-white px-4 py-2.5 dark:border-slate-700 dark:bg-slate-900">
-      <div className="flex flex-wrap items-center gap-2">
-        {/* Search */}
-        <div className="relative flex-1 min-w-[200px]">
-          <input
-            type="text"
-            placeholder="Search tasks..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 pl-9 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-          />
-          <svg
-            className="absolute left-3 top-2.5 h-4 w-4 text-slate-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
+    <div className="space-y-3 px-4 py-4 sm:px-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-1 flex-wrap items-center gap-3">
+          <div className="relative min-w-[220px] flex-1 overflow-hidden rounded-xl border border-slate-700 bg-slate-800/70">
+            <input
+              ref={searchRef}
+              type="text"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search tasks, assignees, keywords…"
+              className="w-full bg-transparent px-10 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none"
+            />
+            <svg
+              className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-        </div>
-
-        {/* Status Filter */}
-        <div className="relative">
-          <button
-            onClick={() => setShowStatusMenu(!showStatusMenu)}
-            className={`flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
-              selectedStatuses.length > 0
-                ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30'
-                : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300'
-            }`}
-          >
-            <span>Status</span>
-            {selectedStatuses.length > 0 && (
-              <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-xs text-white">
-                {selectedStatuses.length}
-              </span>
-            )}
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            >
+              <circle cx="11" cy="11" r="7" />
+              <line x1="20" y1="20" x2="16.65" y2="16.65" />
             </svg>
-          </button>
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-slate-600 px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-400">
+              ⌘F
+            </span>
+          </div>
 
-          {showStatusMenu && (
-            <>
-              <div
-                className="fixed inset-0 z-10"
-                onClick={() => setShowStatusMenu(false)}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <FilterButton
+                label="Status"
+                count={selectedStatuses.length}
+                active={selectedStatuses.length > 0}
+                open={statusOpen}
+                onClick={() => {
+                  setStatusOpen((open) => !open);
+                  setAssigneeOpen(false);
+                  setFlagOpen(false);
+                }}
               />
-              <div className="absolute left-0 top-full z-20 mt-2 w-56 rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">
-                <div className="p-2">
-                  {TASK_STATUSES.map((status) => (
-                    <label
-                      key={status.value}
-                      className="flex items-center gap-2 rounded px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedStatuses.includes(status.value)}
-                        onChange={() => toggleStatus(status.value)}
-                        className="rounded border-slate-300"
-                      />
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${status.color}`}>
-                        {status.label}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+              {statusOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-20"
+                    onClick={() => setStatusOpen(false)}
+                  />
+                  <div className="absolute left-0 top-full z-30 mt-2 w-64 rounded-2xl border border-slate-700 bg-slate-900/95 p-3 shadow-2xl shadow-cyan-900/40 backdrop-blur">
+                    <p className="mb-2 px-1 text-[11px] uppercase tracking-wide text-slate-500">
+                      Filter by status
+                    </p>
+                    <div className="space-y-1.5">
+                      {Object.entries(STATUS_META).map(([value, meta]) => (
+                        <label
+                          key={value}
+                          className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-sm text-slate-200 transition hover:bg-slate-800/80"
+                        >
+                          <span>{meta.label}</span>
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-cyan-400 focus:ring-cyan-400"
+                            checked={selectedStatuses.includes(value)}
+                            onChange={() => toggleStatus(value)}
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
 
-        {/* Assignee Filter */}
-        <div className="relative">
-          <button
-            onClick={() => setShowAssigneeMenu(!showAssigneeMenu)}
-            className={`flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
-              selectedAssignees.length > 0
-                ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30'
-                : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300'
-            }`}
-          >
-            <span>Assignee</span>
-            {selectedAssignees.length > 0 && (
-              <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-xs text-white">
-                {selectedAssignees.length}
-              </span>
-            )}
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-
-          {showAssigneeMenu && (
-            <>
-              <div
-                className="fixed inset-0 z-10"
-                onClick={() => setShowAssigneeMenu(false)}
+            <div className="relative">
+              <FilterButton
+                label="Assignee"
+                count={selectedAssignees.length}
+                active={selectedAssignees.length > 0}
+                open={assigneeOpen}
+                onClick={() => {
+                  setAssigneeOpen((open) => !open);
+                  setStatusOpen(false);
+                  setFlagOpen(false);
+                }}
               />
-              <div className="absolute left-0 top-full z-20 mt-2 w-56 rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800 max-h-64 overflow-y-auto">
-                <div className="p-2">
-                  {users.map((user) => (
-                    <label
-                      key={user.id}
-                      className="flex items-center gap-2 rounded px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedAssignees.includes(user.id)}
-                        onChange={() => toggleAssignee(user.id)}
-                        className="rounded border-slate-300"
-                      />
-                      <span className="text-sm text-slate-700 dark:text-slate-300">
-                        {user.name}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+              {assigneeOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-20"
+                    onClick={() => setAssigneeOpen(false)}
+                  />
+                  <div className="absolute left-0 top-full z-30 mt-2 w-72 max-h-72 overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900/95 p-3 shadow-2xl shadow-cyan-900/40 backdrop-blur">
+                    <p className="mb-2 px-1 text-[11px] uppercase tracking-wide text-slate-500">
+                      Filter by assignee
+                    </p>
+                    <div className="space-y-1.5">
+                      {users.map((option) => (
+                        <label
+                          key={option.id}
+                          className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-sm text-slate-200 transition hover:bg-slate-800/80"
+                        >
+                          <span>{option.name}</span>
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-cyan-400 focus:ring-cyan-400"
+                            checked={selectedAssignees.includes(option.id)}
+                            onChange={() => toggleAssignee(option.id)}
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
 
-        {/* Flag Filter */}
-        <div className="relative">
-          <button
-            onClick={() => setShowFlagMenu(!showFlagMenu)}
-            className={`flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
-              selectedFlags.length > 0
-                ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30'
-                : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300'
-            }`}
-          >
-            <span>Flag</span>
-            {selectedFlags.length > 0 && (
-              <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-xs text-white">
-                {selectedFlags.length}
-              </span>
-            )}
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-
-          {showFlagMenu && (
-            <>
-              <div
-                className="fixed inset-0 z-10"
-                onClick={() => setShowFlagMenu(false)}
+            <div className="relative">
+              <FilterButton
+                label="Flag"
+                count={selectedFlags.length}
+                active={selectedFlags.length > 0}
+                open={flagOpen}
+                onClick={() => {
+                  setFlagOpen((open) => !open);
+                  setStatusOpen(false);
+                  setAssigneeOpen(false);
+                }}
               />
-              <div className="absolute left-0 top-full z-20 mt-2 w-56 rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">
-                <div className="p-2">
-                  {TASK_FLAGS.map((flag) => (
-                    <label
-                      key={flag}
-                      className="flex items-center gap-2 rounded px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedFlags.includes(flag)}
-                        onChange={() => toggleFlag(flag)}
-                        className="rounded border-slate-300"
-                      />
-                      <span className="text-lg">{FLAG_LABELS[flag].icon}</span>
-                      <span className="text-sm text-slate-700 dark:text-slate-300">
-                        {FLAG_LABELS[flag].label}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
+              {flagOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-20"
+                    onClick={() => setFlagOpen(false)}
+                  />
+                  <div className="absolute left-0 top-full z-30 mt-2 w-64 rounded-2xl border border-slate-700 bg-slate-900/95 p-3 shadow-2xl shadow-cyan-900/40 backdrop-blur">
+                    <p className="mb-2 px-1 text-[11px] uppercase tracking-wide text-slate-500">
+                      Filter by flag
+                    </p>
+                    <div className="space-y-1.5">
+                      {TASK_FLAGS.map((flag) => (
+                        <label
+                          key={flag}
+                          className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-sm text-slate-200 transition hover:bg-slate-800/80"
+                        >
+                          <span className="flex items-center gap-2">
+                            <span>{FLAG_META[flag].icon}</span>
+                            {FLAG_META[flag].label}
+                          </span>
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-cyan-400 focus:ring-cyan-400"
+                            checked={selectedFlags.includes(flag)}
+                            onChange={() => toggleFlag(flag)}
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-slate-300">
+              <svg
+                className="h-4 w-4 text-slate-500"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+              <ModernDatePicker
+                value={startDateFrom}
+                onChange={(value) => setStartDateRange(value, startDateTo)}
+                placeholder="Start"
+              />
+              <span className="text-slate-500">→</span>
+              <ModernDatePicker
+                value={dueDateTo}
+                onChange={(value) => setDueDateRange(dueDateFrom, value)}
+                placeholder="Due"
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Date Filters */}
-        <div className="flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 dark:border-slate-600 dark:bg-slate-800">
-          <svg className="h-4 w-4 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          <ModernDatePicker
-            value={startDateFrom}
-            onChange={(date) => setStartDateRange(date, startDateTo)}
-            placeholder="Start date"
-          />
-          <span className="text-slate-400 text-sm px-1">→</span>
-          <ModernDatePicker
-            value={dueDateTo}
-            onChange={(date) => setDueDateRange(dueDateFrom, date)}
-            placeholder="Due date"
-          />
-        </div>
-
-        {/* Clear Filters */}
-        {activeFilterCount > 0 && (
+        {showColumnsButton && (
           <button
-            onClick={clearAllFilters}
-            className="flex items-center gap-2 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400"
+            type="button"
+            className="rounded-xl border border-slate-700 bg-slate-800/70 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-cyan-500 hover:text-cyan-200 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-900"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            Clear ({activeFilterCount})
+            Columns
           </button>
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {filterChips.map((chip) => (
+          <FilterChip key={chip.key} label={chip.label} onRemove={chip.remove} />
+        ))}
+        {hasFilters && (
+          <button
+            type="button"
+            onClick={() => {
+              clearAllFilters();
+              setStatusOpen(false);
+              setAssigneeOpen(false);
+              setFlagOpen(false);
+            }}
+            className="inline-flex items-center gap-2 rounded-full border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition hover:border-cyan-400 hover:bg-cyan-500/20 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+          >
+            Clear all
+          </button>
+        )}
+        {!hasFilters && (
+          <span className="text-xs text-slate-500">
+            Tip: use filters or ⌘F to pinpoint tasks quickly.
+          </span>
         )}
       </div>
     </div>
@@ -272,4 +412,3 @@ const TasksToolbar = ({ users, showColumnsButton = true }: TasksToolbarProps) =>
 };
 
 export default TasksToolbar;
-

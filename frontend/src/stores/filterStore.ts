@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { TaskFlag } from '../types/task';
 
 interface FilterStore {
@@ -22,57 +23,64 @@ interface FilterStore {
   clearAllFilters: () => void;
 }
 
-export const useFilterStore = create<FilterStore>((set) => ({
-  searchQuery: '',
-  selectedStatuses: [],
-  selectedAssignees: [],
-  selectedFlags: [],
-  selectedProject: null,
-  startDateFrom: null,
-  startDateTo: null,
-  dueDateFrom: null,
-  dueDateTo: null,
-
-  setSearchQuery: (query) => set({ searchQuery: query }),
-
-  toggleStatus: (status) =>
-    set((state) => ({
-      selectedStatuses: state.selectedStatuses.includes(status)
-        ? state.selectedStatuses.filter((s) => s !== status)
-        : [...state.selectedStatuses, status],
-    })),
-
-  toggleAssignee: (assigneeId) =>
-    set((state) => ({
-      selectedAssignees: state.selectedAssignees.includes(assigneeId)
-        ? state.selectedAssignees.filter((a) => a !== assigneeId)
-        : [...state.selectedAssignees, assigneeId],
-    })),
-
-  toggleFlag: (flag) =>
-    set((state) => ({
-      selectedFlags: state.selectedFlags.includes(flag)
-        ? state.selectedFlags.filter((f) => f !== flag)
-        : [...state.selectedFlags, flag],
-    })),
-
-  setProject: (projectId) => set({ selectedProject: projectId }),
-
-  setStartDateRange: (from, to) =>
-    set({ startDateFrom: from, startDateTo: to }),
-
-  setDueDateRange: (from, to) => set({ dueDateFrom: from, dueDateTo: to }),
-
-  clearAllFilters: () =>
-    set({
+export const useFilterStore = create<FilterStore>()(
+  persist(
+    (set) => ({
       searchQuery: '',
       selectedStatuses: [],
       selectedAssignees: [],
       selectedFlags: [],
+      selectedProject: null,
       startDateFrom: null,
       startDateTo: null,
       dueDateFrom: null,
       dueDateTo: null,
+
+      setSearchQuery: (query) => set({ searchQuery: query }),
+
+      toggleStatus: (status) =>
+        set((state) => ({
+          selectedStatuses: state.selectedStatuses.includes(status)
+            ? state.selectedStatuses.filter((s) => s !== status)
+            : [...state.selectedStatuses, status],
+        })),
+
+      toggleAssignee: (assigneeId) =>
+        set((state) => ({
+          selectedAssignees: state.selectedAssignees.includes(assigneeId)
+            ? state.selectedAssignees.filter((a) => a !== assigneeId)
+            : [...state.selectedAssignees, assigneeId],
+        })),
+
+      toggleFlag: (flag) =>
+        set((state) => ({
+          selectedFlags: state.selectedFlags.includes(flag)
+            ? state.selectedFlags.filter((f) => f !== flag)
+            : [...state.selectedFlags, flag],
+        })),
+
+      setProject: (projectId) => set({ selectedProject: projectId }),
+
+      setStartDateRange: (from, to) =>
+        set({ startDateFrom: from, startDateTo: to }),
+
+      setDueDateRange: (from, to) => set({ dueDateFrom: from, dueDateTo: to }),
+
+      clearAllFilters: () =>
+        set({
+          searchQuery: '',
+          selectedStatuses: [],
+          selectedAssignees: [],
+          selectedFlags: [],
+          startDateFrom: null,
+          startDateTo: null,
+          dueDateFrom: null,
+          dueDateTo: null,
+        }),
     }),
-}));
+    {
+      name: 'nagrik-task-filters',
+    }
+  )
+);
 
