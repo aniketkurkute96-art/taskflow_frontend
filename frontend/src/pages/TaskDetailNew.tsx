@@ -570,7 +570,7 @@ const TaskDetailNew = () => {
         </div>
 
         <aside className="col-span-12 md:col-span-4 space-y-4">
-          <div className="sticky top-20">
+          <div className="sticky top-16">
             <CommentsPanel
               taskId={task.id}
               comments={(timeline.filter(t => t.type === 'comment') as any) || []}
@@ -580,7 +580,7 @@ const TaskDetailNew = () => {
               headerExtras={<Badge variant={task.approvalStatus ?? 'none'} />}
             />
           </div>
-          <div className="sticky top-[calc(20px+380px)]">
+          <div className="sticky top-[calc(64px+380px)]">
             <TimelinePanel items={timeline} />
           </div>
         </aside>
