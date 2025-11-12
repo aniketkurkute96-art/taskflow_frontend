@@ -425,229 +425,273 @@ const TaskCreateNew = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-                    Start Date
+                    Priority
                   </label>
-                  <input
-                    type="date"
-                    name="startDate"
-                    value={formData.startDate}
+                  <select
+                    name="priorityFlag"
+                    value={formData.priorityFlag}
                     onChange={handleInputChange}
                     className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                  />
+                  >
+                    {TASK_FLAGS.map((flag) => (
+                      <option key={flag} value={flag}>
+                        {flag.replace(/_/g, ' ').toLowerCase()}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                <div>
+                {/* Start and Due in a single row */}
+                <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-                    Due Date
+                    Start → Due
                   </label>
-                  <input
-                    type="date"
-                    name="dueDate"
-                    value={formData.dueDate}
-                    onChange={handleInputChange}
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                  />
+                  <div className="mt-1 flex items-center gap-3">
+                    <input
+                      type="date"
+                      name="startDate"
+                      value={formData.startDate}
+                      onChange={handleInputChange}
+                      className="w-40 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                    />
+                    <span className="text-slate-400">→</span>
+                    <input
+                      type="date"
+                      name="dueDate"
+                      value={formData.dueDate}
+                      onChange={handleInputChange}
+                      className="w-40 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                    />
+                  </div>
                 </div>
 
-                <div>
+                {/* Recurrence inline (replaces separate section and budget field) */}
+                <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-                    Budget / Amount (optional)
+                    Recurrence
                   </label>
-                  <input
-                    type="number"
-                    name="amount"
-                    value={formData.amount}
-                    onChange={handleInputChange}
-                    min={0}
-                    step={0.01}
-                    placeholder="0.00"
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                  />
+                  <div className="mt-2 space-y-4 rounded-xl border border-slate-100 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-900/40">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      {(['none', 'daily', 'weekly', 'monthly'] as RecurrenceType[]).map((type) => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() =>
+                            setRecurrence((prev) => ({
+                              ...prev,
+                              type,
+                            }))
+                          }
+                          className={`rounded-lg border px-3 py-2 text-sm font-medium capitalize transition focus:outline-none focus:ring-2 focus:ring-indigo-200 ${
+                            recurrence.type === type
+                              ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-900/30 dark:text-indigo-300'
+                              : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-300 hover:bg-indigo-50/60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
+                          }`}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
+                    {recurrence.type !== 'none' && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+                            Repeat every
+                          </label>
+                          <div className="mt-1 flex items-center gap-2">
+                            <input
+                              type="number"
+                              min={1}
+                              max={30}
+                              value={recurrence.interval}
+                              onChange={(event) =>
+                                setRecurrence((prev) => ({
+                                  ...prev,
+                                  interval: Number(event.target.value) || 1,
+                                }))
+                              }
+                              className="w-20 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                            />
+                            <span className="text-sm text-slate-600 dark:text-slate-300">
+                              {recurrence.type === 'daily'
+                                ? 'day(s)'
+                                : recurrence.type === 'weekly'
+                                ? 'week(s)'
+                                : 'month(s)'}
+                            </span>
+                          </div>
+                        </div>
+                        {recurrence.type === 'weekly' && (
+                          <div>
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                              On
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {WEEKDAYS.map((day) => {
+                                const active = recurrence.weekdays.includes(day.value);
+                                return (
+                                  <button
+                                    key={day.value}
+                                    type="button"
+                                    onClick={() => toggleWeekday(day.value)}
+                                    className={`rounded-full border px-3 py-1 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-indigo-200 ${
+                                      active
+                                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-900/30 dark:text-indigo-300'
+                                        : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-300 hover:bg-indigo-50/60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
+                                    }`}
+                                  >
+                                    {day.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                        {recurrence.type === 'monthly' && (
+                          <div>
+                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+                              Day of month
+                            </label>
+                            <input
+                              type="number"
+                              min={1}
+                              max={31}
+                              value={recurrence.monthlyDay}
+                              onChange={(event) =>
+                                setRecurrence((prev) => ({
+                                  ...prev,
+                                  monthlyDay: Math.min(Math.max(Number(event.target.value) || 1, 1), 31),
+                                }))
+                              }
+                              className="mt-1 w-24 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                            />
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
+
+                {/* Approval Type + Manual Approvers inline */}
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+                    Approval Type
+                  </label>
+                  <select
+                    name="approvalType"
+                    value={formData.approvalType}
+                    onChange={(event) => {
+                      handleInputChange(event);
+                      if (event.target.value !== 'specific') {
+                        setManualApprovers([]);
+                      }
+                    }}
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                  >
+                    <option value="360">360° approval (auto route)</option>
+                    <option value="specific">Specific approvers</option>
+                    <option value="predefined" disabled>
+                      Predefined template (coming soon)
+                    </option>
+                  </select>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    360 — routes approval in reverse of forward path.
+                  </p>
+                </div>
+                {formData.approvalType === 'specific' && (
+                  <div className="sm:col-span-2 rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 dark:border-indigo-800/40 dark:bg-indigo-900/20">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h4 className="text-sm font-semibold text-indigo-600 dark:text-indigo-300">
+                          Approval levels
+                        </h4>
+                        <p className="mt-1 text-xs text-indigo-500 dark:text-indigo-400">
+                          Define who approves and in what order.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={addManualApprover}
+                        className="inline-flex items-center rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+                      >
+                        + Add approver
+                      </button>
+                    </div>
+                    <div className="mt-4 space-y-3">
+                      {manualApprovers.length === 0 && (
+                        <p className="rounded-lg border border-dashed border-indigo-200 px-3 py-4 text-center text-sm text-indigo-500 dark:border-indigo-700 dark:text-indigo-300">
+                          No approvers yet. Add the first reviewer to get started.
+                        </p>
+                      )}
+                      {manualApprovers.map((approver) => (
+                        <div
+                          key={approver.id}
+                          className="rounded-lg border border-indigo-200 bg-white px-3 py-3 shadow-sm dark:border-indigo-700 dark:bg-slate-900"
+                        >
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex flex-1 flex-col gap-3 sm:flex-row">
+                              <div className="flex-1">
+                                <label className="text-xs font-medium uppercase tracking-wide text-indigo-500">
+                                  Approver
+                                </label>
+                                <select
+                                  value={approver.approverUserId}
+                                  onChange={(event) =>
+                                    updateManualApprover(
+                                      approver.id,
+                                      'approverUserId',
+                                      event.target.value
+                                    )
+                                  }
+                                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                                >
+                                  <option value="">Select approver…</option>
+                                  {users.map((user) => (
+                                    <option key={user.id} value={user.id}>
+                                      {user.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div className="w-full sm:w-32">
+                                <label className="text-xs font-medium uppercase tracking-wide text-indigo-500">
+                                  Level
+                                </label>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={approver.levelOrder}
+                                  onChange={(event) =>
+                                    updateManualApprover(
+                                      approver.id,
+                                      'levelOrder',
+                                      Number(event.target.value) || 1
+                                    )
+                                  }
+                                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                                />
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeManualApprover(approver.id)}
+                              className="inline-flex items-center rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-500 transition hover:border-red-300 hover:text-red-600 dark:border-slate-700 dark:text-slate-400 dark:hover:border-red-400 dark:hover:text-red-300"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </SectionCard>
 
           {/* Priority now lives inside Task Details as a dropdown */}
 
-          <SectionCard
-            title="Schedule & Recurrence"
-            subtitle="Automate future instances or reminders."
-          >
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {(['none', 'daily', 'weekly', 'monthly'] as RecurrenceType[]).map((type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() =>
-                      setRecurrence((prev) => ({
-                        ...prev,
-                        type,
-                      }))
-                    }
-                    className={`rounded-lg border px-3 py-2 text-sm font-medium capitalize transition focus:outline-none focus:ring-2 focus:ring-indigo-200 ${
-                      recurrence.type === type
-                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-900/30 dark:text-indigo-300'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-300 hover:bg-indigo-50/60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
-                    }`}
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
-
-              {recurrence.type !== 'none' && (
-                <div className="space-y-4 rounded-xl border border-slate-100 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-900/40">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-                      Repeat every
-                    </label>
-                    <div className="mt-1 flex items-center gap-2">
-                      <input
-                        type="number"
-                        min={1}
-                        max={30}
-                        value={recurrence.interval}
-                        onChange={(event) =>
-                          setRecurrence((prev) => ({
-                            ...prev,
-                            interval: Number(event.target.value) || 1,
-                          }))
-                        }
-                        className="w-20 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                      />
-                      <span className="text-sm text-slate-600 dark:text-slate-300">
-                        {recurrence.type === 'daily'
-                          ? 'day(s)'
-                          : recurrence.type === 'weekly'
-                          ? 'week(s)'
-                          : 'month(s)'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {recurrence.type === 'weekly' && (
-                    <div>
-                      <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                        On
-                      </p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {WEEKDAYS.map((day) => {
-                          const active = recurrence.weekdays.includes(day.value);
-                          return (
-                            <button
-                              key={day.value}
-                              type="button"
-                              onClick={() => toggleWeekday(day.value)}
-                              className={`rounded-full border px-3 py-1 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-indigo-200 ${
-                                active
-                                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-900/30 dark:text-indigo-300'
-                                  : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-300 hover:bg-indigo-50/60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
-                              }`}
-                            >
-                              {day.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {recurrence.type === 'monthly' && (
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-                        Day of month
-                      </label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={31}
-                        value={recurrence.monthlyDay}
-                        onChange={(event) =>
-                          setRecurrence((prev) => ({
-                            ...prev,
-                            monthlyDay: Math.min(Math.max(Number(event.target.value) || 1, 1), 31),
-                          }))
-                        }
-                        className="mt-1 w-24 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                      />
-                    </div>
-                  )}
-
-                  <div>
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                      Ends
-                    </p>
-                    <div className="mt-2 space-y-2">
-                      {(['never', 'on_date', 'after'] as RecurrenceEnds[]).map((option) => (
-                        <label
-                          key={option}
-                          className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition hover:border-indigo-300 dark:border-slate-700 dark:bg-slate-900"
-                        >
-                          <span className="flex items-center gap-3">
-                            <input
-                              type="radio"
-                              name="recurrenceEnds"
-                              value={option}
-                              checked={recurrence.ends === option}
-                              onChange={() =>
-                                setRecurrence((prev) => ({
-                                  ...prev,
-                                  ends: option,
-                                }))
-                              }
-                              className="text-indigo-600 focus:ring-indigo-500"
-                            />
-                            <span className="capitalize text-slate-600 dark:text-slate-300">
-                              {option === 'on_date'
-                                ? 'On specific date'
-                                : option === 'after'
-                                ? 'After number of occurrences'
-                                : 'Never'}
-                            </span>
-                          </span>
-
-                          {option === 'on_date' && recurrence.ends === 'on_date' && (
-                            <input
-                              type="date"
-                              value={recurrence.endDate}
-                              onChange={(event) =>
-                                setRecurrence((prev) => ({
-                                  ...prev,
-                                  endDate: event.target.value,
-                                }))
-                              }
-                              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                            />
-                          )}
-
-                          {option === 'after' && recurrence.ends === 'after' && (
-                            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                              <input
-                                type="number"
-                                min={1}
-                                max={100}
-                                value={recurrence.occurrences}
-                                onChange={(event) =>
-                                  setRecurrence((prev) => ({
-                                    ...prev,
-                                    occurrences: Math.max(Number(event.target.value) || 1, 1),
-                                  }))
-                                }
-                                className="w-20 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                              />
-                              <span>occurrence(s)</span>
-                            </div>
-                          )}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </SectionCard>
+          {/* Recurrence moved into Task Details */}
 
           <SectionCard title="Attachments & Supporting Docs">
             <div
@@ -726,124 +770,7 @@ const TaskCreateNew = () => {
             )}
           </SectionCard>
 
-          <SectionCard title="Approvals Workflow" subtitle="Choose the flow and, if needed, add approvers." >
-            <div className="space-y-4">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-                    Approval Type
-                  </label>
-                  <select
-                    name="approvalType"
-                    value={formData.approvalType}
-                    onChange={(event) => {
-                      handleInputChange(event);
-                      if (event.target.value !== 'specific') {
-                        setManualApprovers([]);
-                      }
-                    }}
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                  >
-                    <option value="360">360° approval (auto route)</option>
-                    <option value="specific">Specific approvers</option>
-                    <option value="predefined" disabled>
-                      Predefined template (coming soon)
-                    </option>
-                  </select>
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    360 — routes approval in reverse of forward path.
-                  </p>
-                </div>
-                {formData.approvalType === 'specific' && (
-                  <button
-                    type="button"
-                    onClick={addManualApprover}
-                    className="inline-flex items-center self-start rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700"
-                  >
-                    + Add approver
-                  </button>
-                )}
-              </div>
-
-              {formData.approvalType === 'specific' && (
-                <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 dark:border-indigo-800/40 dark:bg-indigo-900/20">
-                  <h4 className="text-sm font-semibold text-indigo-600 dark:text-indigo-300">
-                    Approval levels
-                  </h4>
-                  <p className="mt-1 text-xs text-indigo-500 dark:text-indigo-400">
-                    Define who approves and in what order.
-                  </p>
-
-                  <div className="mt-4 space-y-3">
-                    {manualApprovers.length === 0 && (
-                      <p className="rounded-lg border border-dashed border-indigo-200 px-3 py-4 text-center text-sm text-indigo-500 dark:border-indigo-700 dark:text-indigo-300">
-                        No approvers yet. Add the first reviewer to get started.
-                      </p>
-                    )}
-                    {manualApprovers.map((approver) => (
-                      <div
-                        key={approver.id}
-                        className="rounded-lg border border-indigo-200 bg-white px-3 py-3 shadow-sm dark:border-indigo-700 dark:bg-slate-900"
-                      >
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="flex flex-1 flex-col gap-3 sm:flex-row">
-                            <div className="flex-1">
-                              <label className="text-xs font-medium uppercase tracking-wide text-indigo-500">
-                                Approver
-                              </label>
-                              <select
-                                value={approver.approverUserId}
-                                onChange={(event) =>
-                                  updateManualApprover(
-                                    approver.id,
-                                    'approverUserId',
-                                    event.target.value
-                                  )
-                                }
-                                className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                              >
-                                <option value="">Select approver…</option>
-                                {users.map((user) => (
-                                  <option key={user.id} value={user.id}>
-                                    {user.name}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                            <div className="w-full sm:w-32">
-                              <label className="text-xs font-medium uppercase tracking-wide text-indigo-500">
-                                Level
-                              </label>
-                              <input
-                                type="number"
-                                min={1}
-                                value={approver.levelOrder}
-                                onChange={(event) =>
-                                  updateManualApprover(
-                                    approver.id,
-                                    'levelOrder',
-                                    Number(event.target.value) || 1
-                                  )
-                                }
-                                className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                              />
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => removeManualApprover(approver.id)}
-                            className="inline-flex items-center rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-500 transition hover:border-red-300 hover:text-red-600 dark:border-slate-700 dark:text-slate-400 dark:hover:border-red-400 dark:hover:text-red-300"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </SectionCard>
+          {/* Approvals Workflow now lives inside Task Details */}
 
           <SectionCard title="Kick-off Comment (optional)">
             <textarea
