@@ -1,39 +1,44 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import Layout from '../components/Layout';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { format } from 'date-fns';
 import Timeline from '../components/Timeline';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { format } from 'date-fns';
+import Badge from '../components/Badge';
+import ActionButtons from '../components/ActionButtons';
+import CommentsPanel from '../components/CommentsPanel';
+import TimelinePanel from '../components/TimelinePanel';
+
+interface TaskUser {
+  id: string;
+  name: string;
+  email: string;
+}
+
+interface TaskDepartment {
+  id: string;
+  name: string;
+}
 
 interface Task {
   id: string;
   title: string;
   description?: string;
   status: string;
-  startDate?: string;
-  dueDate?: string;
-  amount?: number;
-  creator: { id: string; name: string; email: string };
-  assignee?: { id: string; name: string; email: string };
-  department?: { id: string; name: string };
+  approvalStatus?: string;
+  approvalType: string;
+  priorityFlag?: string;
+  priorityNotes?: string | null;
+  startDate?: string | null;
+  dueDate?: string | null;
+  recurrenceType?: string | null;
+  recurrenceRule?: string | null;
+  amount?: number | null;
   createdAt: string;
   updatedAt: string;
-}
-
-interface Comment {
-  id: string;
-  content: string;
-  user: { id: string; name: string };
-  createdAt: string;
-}
-
-interface ActivityLog {
-  id: string;
-  action: string;
-  description: string;
-  user?: { id: string; name: string };
-  createdAt: string;
+  creator: TaskUser;
+  assignee?: TaskUser | null;
+  department?: TaskDepartment | null;
 }
 
 interface TimelineItem {
@@ -41,7 +46,7 @@ interface TimelineItem {
   type: 'activity' | 'comment';
   action: string;
   description: string;
-  user?: { id: string; name: string; email: string };
+  user?: TaskUser | null;
   oldValue?: string | null;
   newValue?: string | null;
   createdAt: string;
@@ -51,464 +56,578 @@ interface Attachment {
   id: string;
   filename: string;
   filepath: string;
-  fileSize?: number;
-  user: { id: string; name: string };
+  fileSize?: number | null;
+  mimeType?: string | null;
   createdAt: string;
+  user: TaskUser;
 }
 
-interface User {
+interface UserOption {
   id: string;
   name: string;
   email: string;
 }
 
+const SectionCard = ({
+  title,
+  subtitle,
+  right,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  right?: React.ReactNode;
+  children: React.ReactNode;
+}) => (
+  <section className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+    <header className="flex items-center justify-between border-b border-slate-100 px-4 py-3 sm:px-6 sm:py-4 dark:border-slate-700">
+      <div>
+        <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
+        {subtitle && (
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
+        )}
+      </div>
+      {right ? <div className="ml-4 flex items-center gap-2">{right}</div> : null}
+    </header>
+    <div className="px-4 py-4 sm:px-6 sm:py-6">{children}</div>
+  </section>
+);
+
+const priorityLabel = (flag?: string | null) => {
+  if (!flag || flag === 'NONE') return 'None';
+  return flag.replace(/_/g, ' ').toLowerCase();
+};
+
+const approvalBadgeStyles: Record<string, string> = {
+  pending: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+  approved: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
+  rejected: 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300',
+  partial: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300',
+  none: 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300',
+};
+
+const statusBadgeStyles: Record<string, string> = {
+  open: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  in_progress: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+  pending_approval: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+  approved: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  rejected: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+};
+
+const formatCurrency = (value?: number | null) => {
+  if (value === undefined || value === null) return '—';
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+};
+
+const formatDate = (value?: string | null, withTime = false) => {
+  if (!value) return '—';
+  try {
+    return format(new Date(value), withTime ? 'MMM dd, yyyy • HH:mm' : 'MMM dd, yyyy');
+  } catch (error) {
+    return value;
+  }
+};
+
+const parseRecurrenceSummary = (type?: string | null, rule?: string | null) => {
+  if (!type || type === 'none') return 'Does not repeat';
+
+  const base = type.charAt(0).toUpperCase() + type.slice(1);
+  if (!rule) return `${base} recurrence`;
+
+  try {
+    const parsed = JSON.parse(rule);
+    const interval = parsed.interval || 1;
+    if (type === 'daily') {
+      return `Every ${interval} day${interval > 1 ? 's' : ''}`;
+    }
+    if (type === 'weekly') {
+      const days = (parsed.weekdays || [])
+        .map((day: string) => day.slice(0, 2))
+        .join(', ');
+      return `Every ${interval} week${interval > 1 ? 's' : ''}` + (days ? ` on ${days}` : '');
+    }
+    if (type === 'monthly') {
+      const day = parsed.monthlyDay || 1;
+      return `Every ${interval} month${interval > 1 ? 's' : ''} on day ${day}`;
+    }
+    return `${base} recurrence`;
+  } catch (error) {
+    return `${base} recurrence`;
+  }
+};
+
+const resolveAttachmentUrl = (filepath: string) => {
+  if (!filepath) return '#';
+  if (filepath.startsWith('http')) return filepath;
+  const base = (import.meta.env.VITE_API_URL || api.defaults.baseURL || '').replace(/\/$/, '');
+  const baseWithoutApi = base.replace(/\/api$/, '');
+  const normalizedPath = filepath.startsWith('/') ? filepath : `/${filepath}`;
+  return `${baseWithoutApi}${normalizedPath}`;
+};
+
 const TaskDetailNew = () => {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [task, setTask] = useState<Task | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  const [newComment, setNewComment] = useState('');
-  const [commentLoading, setCommentLoading] = useState(false);
-  
-  // Forward task state
-  const [users, setUsers] = useState<User[]>([]);
-  const [showForwardDialog, setShowForwardDialog] = useState(false);
-  const [selectedUser, setSelectedUser] = useState('');
-  const [forwardLoading, setForwardLoading] = useState(false);
+  const [users, setUsers] = useState<UserOption[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [comment, setComment] = useState('');
+  const [commentBusy, setCommentBusy] = useState(false);
+  const [showForward, setShowForward] = useState(false);
+  const [forwardUserId, setForwardUserId] = useState('');
+  const [forwardBusy, setForwardBusy] = useState(false);
+  const [uploadBusy, setUploadBusy] = useState(false);
+  const [timeline, setTimeline] = useState<TimelineItem[]>([]);
+
+  const isMobile = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(max-width: 768px)').matches;
+  }, []);
 
   useEffect(() => {
-    fetchTask();
-    fetchComments();
-    fetchActivityLogs();
-    fetchTimeline();
-    fetchAttachments();
-    fetchUsers();
+    const loadInitial = async () => {
+      try {
+        setIsLoading(true);
+        await Promise.all([fetchTask(), fetchTimeline(), fetchAttachments(), fetchUsers()]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadInitial();
   }, [id]);
 
   const fetchTask = async () => {
-    try {
-      const response = await api.get(`/tasks/${id}`);
-      setTask(response.data);
-    } catch (error) {
-      console.error('Error fetching task:', error);
-      alert('Failed to load task');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchComments = async () => {
-    try {
-      const response = await api.get(`/tasks/${id}/comments`);
-      setComments(response.data);
-    } catch (error) {
-      console.error('Error fetching comments:', error);
-    }
-  };
-
-  const fetchActivityLogs = async () => {
-    try {
-      const response = await api.get(`/tasks/${id}/activity`);
-      setActivityLogs(response.data);
-    } catch (error) {
-      console.error('Error fetching activity logs:', error);
-    }
+    if (!id) return;
+    const response = await api.get(`/tasks/${id}`);
+    setTask(response.data);
   };
 
   const fetchTimeline = async () => {
-    try {
-      const response = await api.get(`/tasks/${id}/timeline`);
-      setTimeline(response.data);
-    } catch (error) {
-      console.error('Error fetching timeline:', error);
-    }
+    if (!id) return;
+    const response = await api.get(`/tasks/${id}/timeline`);
+    setTimeline(response.data);
   };
 
   const fetchAttachments = async () => {
-    try {
-      const response = await api.get(`/tasks/${id}/attachments`);
-      setAttachments(response.data);
-    } catch (error) {
-      console.error('Error fetching attachments:', error);
-    }
+    if (!id) return;
+    const response = await api.get(`/tasks/${id}/attachments`);
+    setAttachments(response.data);
   };
 
   const fetchUsers = async () => {
-    try {
-      const response = await api.get('/users');
-      setUsers(response.data);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    }
+    const response = await api.get('/users');
+    setUsers(response.data);
   };
 
-  const handleForward = async () => {
-    if (!selectedUser) {
-      alert('Please select a user to forward to');
-      return;
-    }
+  const isAssignee = task && user?.id === task.assignee?.id;
+  const isAdmin = user?.role === 'admin';
+  const canEdit = isAdmin || isAssignee;
 
-    setForwardLoading(true);
-    try {
-      await api.post(`/tasks/${id}/forward`, { toUserId: selectedUser });
-      setShowForwardDialog(false);
-      setSelectedUser('');
-      fetchTask();
-      fetchActivityLogs();
-      fetchTimeline();
-      alert('Task forwarded successfully!');
-    } catch (error: any) {
-      alert(error.response?.data?.error || 'Failed to forward task');
-    } finally {
-      setForwardLoading(false);
+  const availableActions = () => {
+    if (!task) return [];
+    // Only assignee or admin can perform actions
+    if (!isAssignee && !isAdmin) return [];
+    
+    if (task.status === 'open') {
+      return [
+        {
+          label: 'Start Task',
+          onClick: () => updateStatus('in_progress'),
+        },
+      ];
     }
+    if (task.status === 'in_progress') {
+      return [
+        {
+          label: 'Submit for Approval',
+          onClick: () => submitForApproval(),
+        },
+        {
+          label: 'Forward Task',
+          onClick: () => setShowForward(true),
+        },
+        {
+          label: 'Mark Back to Open',
+          onClick: () => updateStatus('open'),
+        },
+      ];
+    }
+    if (task.status === 'pending_approval' && isAdmin) {
+      return [
+        {
+          label: 'Approve Task',
+          onClick: () => handleApprove(),
+        },
+        {
+          label: 'Reject Task',
+          onClick: () => handleReject(),
+        },
+      ];
+    }
+    return [];
   };
 
-  const handleActionChange = (action: string) => {
-    if (action === 'forward') {
-      setShowForwardDialog(true);
-    } else if (action === 'submit') {
-      handleComplete();
-    } else if (action === 'in_progress') {
-      handleStatusChange('in_progress');
-    } else if (action === 'open') {
-      handleStatusChange('open');
-    }
-  };
-
-  const handleAddComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newComment.trim()) return;
-
-    setCommentLoading(true);
-    try {
-      await api.post(`/tasks/${id}/comments`, { content: newComment });
-      setNewComment('');
-      fetchComments();
-      fetchActivityLogs(); // Refresh activity log
-      fetchTimeline(); // Refresh timeline
-    } catch (error) {
-      console.error('Error adding comment:', error);
-      alert('Failed to add comment');
-    } finally {
-      setCommentLoading(false);
-    }
-  };
-
-  const handleComplete = async () => {
+  const submitForApproval = async () => {
+    if (!id) return;
     try {
       await api.post(`/tasks/${id}/complete`);
-      fetchTask();
-      fetchActivityLogs();
-      fetchTimeline();
-      alert('Task submitted for approval successfully!');
+      await Promise.all([fetchTask(), fetchTimeline()]);
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Failed to submit task for approval');
+      alert(error.response?.data?.error || 'Failed to submit for approval');
     }
   };
 
-  const handleStatusChange = async (newStatus: string) => {
+  const updateStatus = async (status: string) => {
+    if (!id) return;
     try {
-      await api.patch(`/tasks/${id}/status`, { status: newStatus });
-      fetchTask();
-      fetchActivityLogs();
-      fetchTimeline();
-      alert('Status updated successfully');
+      await api.patch(`/tasks/${id}/status`, { status });
+      await Promise.all([fetchTask(), fetchTimeline()]);
     } catch (error: any) {
       alert(error.response?.data?.error || 'Failed to update status');
     }
   };
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      open: 'bg-blue-100 text-blue-800',
-      in_progress: 'bg-yellow-100 text-yellow-800',
-      pending_approval: 'bg-purple-100 text-purple-800',
-      approved: 'bg-green-100 text-green-800',
-      rejected: 'bg-red-100 text-red-800',
-      completed: 'bg-gray-100 text-gray-800',
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+  const handleAddComment = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!comment.trim() || !id) return;
+    try {
+      setCommentBusy(true);
+      await api.post(`/tasks/${id}/comments`, { content: comment.trim() });
+      setComment('');
+      await fetchTimeline();
+    } catch (error) {
+      alert('Failed to add comment');
+    } finally {
+      setCommentBusy(false);
+    }
   };
 
-  if (loading) {
+  const handleForwardTask = async () => {
+    if (!id || !forwardUserId) {
+      alert('Please select a user to forward to');
+      return;
+    }
+    try {
+      setForwardBusy(true);
+      await api.post(`/tasks/${id}/forward`, { toUserId: forwardUserId });
+      setShowForward(false);
+      setForwardUserId('');
+      await Promise.all([fetchTask(), fetchTimeline()]);
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Failed to forward task');
+    } finally {
+      setForwardBusy(false);
+    }
+  };
+
+  const handleAttachmentUpload = async (files: FileList | null) => {
+    if (!files || !id) return;
+    try {
+      setUploadBusy(true);
+      for (const file of Array.from(files)) {
+        const data = new FormData();
+        data.append('file', file);
+        await api.post(`/tasks/${id}/attachments`, data, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      }
+      await Promise.all([fetchAttachments(), fetchTimeline()]);
+    } catch (error) {
+      alert('Failed to upload attachment');
+    } finally {
+      setUploadBusy(false);
+    }
+  };
+
+  const handleAttachmentDelete = async (attachmentId: string) => {
+    if (!id) return;
+    if (!confirm('Remove this attachment?')) return;
+    try {
+      await api.delete(`/tasks/${id}/attachments/${attachmentId}`);
+      await Promise.all([fetchAttachments(), fetchTimeline()]);
+    } catch (error) {
+      alert('Failed to remove attachment');
+    }
+  };
+
+  const handleApprove = async () => {
+    if (!id) return;
+    if (!confirm('Approve this task?')) return;
+    try {
+      await api.post(`/tasks/${id}/approve`);
+      await Promise.all([fetchTask(), fetchTimeline()]);
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Failed to approve task');
+    }
+  };
+
+  const handleReject = async () => {
+    if (!id) return;
+    const reason = prompt('Reason for rejection (optional):');
+    if (reason === null) return; // User cancelled
+    try {
+      await api.post(`/tasks/${id}/reject`, { reason });
+      await Promise.all([fetchTask(), fetchTimeline()]);
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Failed to reject task');
+    }
+  };
+
+  if (isLoading || !task) {
     return (
-      <Layout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-slate-900">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-indigo-400 border-t-transparent" />
+          <p className="text-sm text-slate-500 dark:text-slate-300">Loading task…</p>
         </div>
-      </Layout>
+      </div>
     );
   }
-
-  if (!task) {
-    return (
-      <Layout>
-        <div className="text-center py-12">
-          <p className="text-gray-600">Task not found</p>
-        </div>
-      </Layout>
-    );
-  }
-
-  const isAssignee = user?.id === task.assignee?.id;
-  const isCreator = user?.id === task.creator?.id;
-  const isAdmin = user?.role === 'admin';
-  const canEdit = isAdmin || isAssignee;
 
   return (
-    <Layout>
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* LEFT SIDE - Task Details */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Header */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">{task.title}</h1>
-                  <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(task.status)}`}>
-                    {task.status.replace('_', ' ').toUpperCase()}
-                  </span>
-                </div>
-                <div className="flex space-x-3">
-                  {canEdit && (
-                    <button
-                      onClick={() => navigate(`/tasks/${id}/edit`)}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center space-x-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                      <span>Edit Task</span>
-                    </button>
-                  )}
-                  <button
-                    onClick={() => navigate('/dashboard')}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    ← Back
-                  </button>
-                </div>
-              </div>
-
-              {/* Description */}
-              {task.description && (
-                <div className="mt-4">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Description</h3>
-                  <p className="text-gray-600">{task.description}</p>
-                </div>
-              )}
-            </div>
-
-            {/* Task Information */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Task Information</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-500">Created By</p>
-                  <p className="text-sm font-medium text-gray-900">{task.creator.name}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Assigned To</p>
-                  <p className="text-sm font-medium text-gray-900">
-                    {task.assignee?.name || 'Unassigned'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Department</p>
-                  <p className="text-sm font-medium text-gray-900">
-                    {task.department?.name || 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Amount</p>
-                  <p className="text-sm font-medium text-gray-900">
-                    {task.amount ? `$${task.amount.toFixed(2)}` : 'N/A'}
-                  </p>
-                </div>
-                {task.startDate && (
-                  <div>
-                    <p className="text-sm text-gray-500">Start Date</p>
-                    <p className="text-sm font-medium text-gray-900">
-                      {format(new Date(task.startDate), 'MMM dd, yyyy')}
-                    </p>
-                  </div>
-                )}
-                {task.dueDate && (
-                  <div>
-                    <p className="text-sm text-gray-500">Due Date</p>
-                    <p className="text-sm font-medium text-gray-900">
-                      {format(new Date(task.dueDate), 'MMM dd, yyyy')}
-                    </p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-sm text-gray-500">Created</p>
-                  <p className="text-sm font-medium text-gray-900">
-                    {format(new Date(task.createdAt), 'MMM dd, yyyy HH:mm')}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Last Updated</p>
-                  <p className="text-sm font-medium text-gray-900">
-                    {format(new Date(task.updatedAt), 'MMM dd, yyyy HH:mm')}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Attachments */}
-            {attachments.length > 0 && (
-              <div className="bg-white shadow rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Attachments</h3>
-                <div className="space-y-2">
-                  {attachments.map((attachment) => (
-                    <div key={attachment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
-                      <div className="flex items-center space-x-3">
-                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                        </svg>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{attachment.filename}</p>
-                          <p className="text-xs text-gray-500">
-                            Uploaded by {attachment.user.name} on {format(new Date(attachment.createdAt), 'MMM dd, yyyy')}
-                          </p>
-                        </div>
-                      </div>
-                      <button className="text-indigo-600 hover:text-indigo-800 text-sm">Download</button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Action Dropdown */}
-            {isAssignee && ['open', 'in_progress'].includes(task.status) && (
-              <div className="bg-white shadow rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
-                <div className="space-y-3">
-                  <select
-                    onChange={(e) => {
-                      handleActionChange(e.target.value);
-                      e.target.value = ''; // Reset dropdown
-                    }}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-gray-700"
-                    defaultValue=""
-                  >
-                    <option value="" disabled>Select an action...</option>
-                    {task.status === 'open' && (
-                      <option value="in_progress">Start Task</option>
-                    )}
-                    {task.status === 'in_progress' && (
-                      <>
-                        <option value="submit">Submit for Approval</option>
-                        <option value="forward">Forward Task to Another User</option>
-                        <option value="open">Cancel Work</option>
-                      </>
-                    )}
-                  </select>
-                </div>
-              </div>
-            )}
+    <div className="flex h-full flex-col bg-slate-50 dark:bg-slate-900">
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <div>
+            <button
+              onClick={() => navigate(-1)}
+              className="text-xs uppercase tracking-wide text-slate-400 transition hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+            >
+              ← Back
+            </button>
+            <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              {task.title}
+            </h1>
           </div>
+          <div className="flex items-center gap-2" />
+        </div>
+      </header>
 
-          {/* RIGHT SIDE - Activity Timeline */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Unified Timeline - Activity Log & Comments */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">Activity & Comments</h3>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                  {timeline.length} {timeline.length === 1 ? 'item' : 'items'}
+      <main className="mx-auto grid w-full max-w-6xl flex-1 grid-cols-12 gap-6 overflow-y-auto px-4 py-6 sm:px-6">
+        <div className="col-span-12 md:col-span-8 flex min-w-0 flex-col gap-6 pb-24 lg:pb-0">
+          <SectionCard
+            title="Overview"
+            right={
+              <div className="flex items-center gap-2">
+                <Badge variant={task.approvalStatus ?? 'none'} />
+                {canEdit && (
+                  <button
+                    onClick={() => navigate(`/tasks/${id}/edit`)}
+                    className="px-3 py-1 rounded-md border border-violet-600 text-violet-200 hover:bg-violet-600/10 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-600"
+                  >
+                    Edit
+                  </button>
+                )}
+              </div>
+            }
+          >
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Owner</p>
+                <p className="mt-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+                  {task.creator.name}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Assignee</p>
+                <p className="mt-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+                  {task.assignee?.name || 'Unassigned'}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Department</p>
+                <p className="mt-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+                  {task.department?.name || '—'}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Budget</p>
+                <p className="mt-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+                  {formatCurrency(task.amount)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Start Date</p>
+                <p className="mt-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+                  {formatDate(task.startDate)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Due Date</p>
+                <p className="mt-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+                  {formatDate(task.dueDate)}
+                </p>
+              </div>
+            </div>
+            {task.description && (
+              <div className="mt-6">
+                <p className="text-xs uppercase tracking-wide text-slate-400">Description</p>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  {task.description}
+                </p>
+              </div>
+            )}
+          </SectionCard>
+
+          <ActionButtons
+            task={task}
+            canApprove={isAdmin}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            onForward={() => setShowForward(true)}
+            onComplete={submitForApproval}
+            onStart={() => updateStatus('in_progress')}
+            onBackToOpen={() => updateStatus('open')}
+          />
+
+          {/* Priority & Recurrence remains under overview */}
+
+          <SectionCard title="Priority & Recurrence">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Priority</p>
+                <p className="mt-1 text-sm font-medium capitalize text-slate-700 dark:text-slate-200">
+                  {priorityLabel(task.priorityFlag)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Repeats</p>
+                <p className="mt-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+                  {parseRecurrenceSummary(task.recurrenceType, task.recurrenceRule)}
+                </p>
+              </div>
+            </div>
+            {task.priorityNotes && (
+              <div className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+                {task.priorityNotes}
+              </div>
+            )}
+          </SectionCard>
+
+          <SectionCard title="Attachments" subtitle="Share invoices, briefs, or other context.">
+            <div className="space-y-4">
+              <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500 transition hover:border-indigo-400 hover:text-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-indigo-400/70">
+                <span className="font-medium text-indigo-600 dark:text-indigo-300">
+                  {uploadBusy ? 'Uploading…' : 'Drag & drop or click to upload'}
                 </span>
-              </div>
+                <span className="mt-1 text-xs">PDF, DOCX, XLSX, PNG up to 25MB</span>
+                <input
+                  type="file"
+                  multiple
+                  onChange={(event) => handleAttachmentUpload(event.target.files)}
+                  className="hidden"
+                  disabled={uploadBusy}
+                />
+              </label>
 
-              {/* Add Comment Form */}
-              <div className="mb-6 pb-6 border-b border-gray-200">
-                <form onSubmit={handleAddComment} className="space-y-3">
-                  <textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Add a comment..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                    rows={3}
-                  />
-                  <button
-                    type="submit"
-                    disabled={commentLoading || !newComment.trim()}
-                    className="w-full px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              {attachments.length === 0 && (
+                <p className="rounded-lg border border-dashed border-slate-200 px-3 py-4 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                  No attachments yet
+                </p>
+              )}
+
+              <ul className="space-y-3">
+                {attachments.map((attachment) => (
+                  <li
+                    key={attachment.id}
+                    className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm shadow-sm dark:border-slate-700 dark:bg-slate-900"
                   >
-                    {commentLoading ? 'Posting...' : 'Post Comment'}
-                  </button>
-                </form>
-              </div>
-
-              {/* Timeline */}
-              <div className="max-h-[600px] overflow-y-auto">
-                <Timeline items={timeline} />
-              </div>
+                    <div>
+                      <p className="font-medium text-slate-700 dark:text-slate-200">
+                        {attachment.filename}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        Uploaded by {attachment.user.name} on {formatDate(attachment.createdAt)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <a
+                        href={resolveAttachmentUrl(attachment.filepath)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 transition hover:border-indigo-400 hover:text-indigo-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-indigo-400 dark:hover:text-indigo-300"
+                      >
+                        Download
+                      </a>
+                      {(isAdmin || user?.id === attachment.user.id) && (
+                        <button
+                          type="button"
+                          onClick={() => handleAttachmentDelete(attachment.id)}
+                          className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-500 transition hover:border-rose-300 hover:text-rose-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-rose-400 dark:hover:text-rose-300"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
+          </SectionCard>
         </div>
 
-        {/* Forward Task Dialog */}
-        {showForwardDialog && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Forward Task</h3>
-              
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select User to Forward To
-                </label>
+        <aside className="col-span-12 md:col-span-4 space-y-4">
+          <div className="sticky top-20">
+            <CommentsPanel
+              taskId={task.id}
+              comments={(timeline.filter(t => t.type === 'comment') as any) || []}
+              commentValue={comment}
+              onChangeComment={setComment}
+              onSubmit={handleAddComment}
+              headerExtras={<Badge variant={task.approvalStatus ?? 'none'} />}
+            />
+          </div>
+          <div className="sticky top-[calc(20px+380px)]">
+            <TimelinePanel items={timeline} />
+          </div>
+
+          {showForward && (
+            <SectionCard title="Forward Task" subtitle="Send this task to another teammate.">
+              <div className="space-y-3">
                 <select
-                  value={selectedUser}
-                  onChange={(e) => setSelectedUser(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  value={forwardUserId}
+                  onChange={(event) => setForwardUserId(event.target.value)}
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                 >
-                  <option value="">Choose a user...</option>
+                  <option value="">Select teammate…</option>
                   {users
-                    .filter((u) => u.id !== user?.id) // Don't show current user
-                    .map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.name} ({u.email})
+                    .filter((option) => option.id !== user?.id)
+                    .map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.name} ({option.email})
                       </option>
                     ))}
                 </select>
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowForward(false);
+                      setForwardUserId('');
+                    }}
+                    className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700 dark:border-slate-700 dark:text-slate-300 dark:hover:border-slate-600"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleForwardTask}
+                    disabled={forwardBusy || !forwardUserId}
+                    className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {forwardBusy ? 'Forwarding…' : 'Forward'}
+                  </button>
+                </div>
               </div>
-
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={() => {
-                    setShowForwardDialog(false);
-                    setSelectedUser('');
-                  }}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                  disabled={forwardLoading}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleForward}
-                  disabled={forwardLoading || !selectedUser}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {forwardLoading ? 'Forwarding...' : 'Forward Task'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </Layout>
+            </SectionCard>
+          )}
+        </aside>
+      </main>
+    </div>
   );
 };
 

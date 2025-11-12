@@ -97,6 +97,65 @@ Frontend runs on: http://localhost:5173
 
 Open http://localhost:5173 in your browser.
 
+### Optional EagleEye UI (Feature Flag)
+
+A new experimental workspace with enhanced task management features can be enabled for early testing. The feature is _disabled_ by default to guarantee the classic UI remains unchanged.
+
+1. Create a `.env.local` file inside the `frontend` directory.
+2. Add the flag:
+
+```bash
+VITE_ENABLE_EAGLEEYE_UI=true
+```
+
+3. Restart `npm run dev` in the frontend terminal.
+
+When the flag is `true`, the app boots into the new EagleEye workspace with two-pane shell. Set the flag to `false` (or remove it) to return to the existing experience.
+
+#### ✨ What's Included in EagleEye UI
+
+**PR 1 — Foundation (Complete)**
+- Feature flag system (`VITE_ENABLE_EAGLEEYE_UI`)
+- Two-pane shell layout (projects sidebar + content area)
+- Type definitions for tasks, projects, and filters
+- Authentication preserved from classic UI
+
+**PR 2 — Projects Sidebar (Complete)**
+- Projects list with color indicators
+- Search and filter projects
+- "+ New Project" button (admin-only)
+- Local persistence (localStorage)
+- Project selection state management (Zustand)
+
+**PR 3 — Enhanced Task List (Complete)**
+- **Virtualized table** for performance with large task lists
+- **Powerful filters:**
+  - Search by task name, description, or assignee
+  - Status filter (open, in progress, pending approval, approved, rejected)
+  - Assignee multi-select filter
+  - Flag filter (high priority, blocked, client wait, internal wait)
+  - Date range filters (start date, due date)
+- **Column management:**
+  - Show/hide columns (title, status, assignee, flag, start date, end date, project, updated)
+  - Adjustable column widths
+  - Persistent column configuration (localStorage)
+- **Smart UI:**
+  - Active filter count badge
+  - Clear all filters button
+  - Empty states with helpful messages
+  - Click row to view task details
+  - Real-time task count display
+- **Responsive design** with dark mode support
+
+**PR 4 — Task Workspace (Complete)**
+- **Mobile-first creation form** with sections for details, schedule, approvals, and attachments
+- Priority flags, notes, recurrence setup, and kickoff comment captured at creation time
+- Attachment drag & drop with previews, dedupe, and upload progress
+- Approval bucket column and sidebar navigation (All Tasks / Approval Bucket / Waiting On)
+- Unified activity timeline including field edits, approvals, comments, and attachment events
+- Modern timeline styling for attachments, priority changes, and real-time refresh after actions
+- Responsive task detail layout with quick actions, recurrence summary, and attachment management
+
 ## 👤 Test Accounts
 
 All users have password: `password`

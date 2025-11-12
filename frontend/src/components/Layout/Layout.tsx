@@ -31,6 +31,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { UserRole } from '../../types';
 import NotificationBell from './NotificationBell';
+import { isEagleEyeUIEnabled } from '../../lib/featureFlags';
 
 const drawerWidth = 240;
 
@@ -42,6 +43,7 @@ const Layout: React.FC<LayoutProps> = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const eagleEyeEnabled = isEagleEyeUIEnabled();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -103,6 +105,21 @@ const Layout: React.FC<LayoutProps> = () => {
       </List>
     </div>
   );
+
+  // When EagleEye UI is enabled, avoid rendering the old MUI app bar/drawer.
+  // Provide a minimal container that just renders nested routes.
+  const isEagleEyeRoute = /^\/(workspace|approval-bucket|waiting-on|tasks)(\/|$)/.test(
+    location.pathname
+  );
+  if (eagleEyeEnabled || isEagleEyeRoute) {
+    return (
+      <Box sx={{ display: 'flex' }}>
+        <Box component="main" sx={{ flexGrow: 1 }}>
+          <Outlet />
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ display: 'flex' }}>

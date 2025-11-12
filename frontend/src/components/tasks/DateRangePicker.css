@@ -1,0 +1,86 @@
+/* Modern Date Picker Styles */
+
+/* Calendar popup container */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* Remove default clear button */
+input[type="date"]::-webkit-clear-button {
+  display: none;
+}
+
+/* Modern scrollbar for calendar */
+input[type="date"]::-webkit-scrollbar {
+  width: 8px;
+}
+
+input[type="date"]::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+input[type="date"]::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+input[type="date"]::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Calendar dropdown styling (WebKit browsers) */
+input[type="date"]::-webkit-datetime-edit {
+  padding: 0;
+}
+
+input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
+}
+
+input[type="date"]::-webkit-datetime-edit-text {
+  padding: 0 0.2em;
+}
+
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+  padding: 0.2em;
+}
+
+/* Focus styles */
+input[type="date"]:focus {
+  outline: none;
+}
+
+/* Custom date input wrapper for better styling control */
+.modern-date-picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.modern-date-picker input[type="date"] {
+  font-family: inherit;
+  letter-spacing: 0.01em;
+}
+
+/* Dark mode adjustments */
+.dark input[type="date"]::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.dark input[type="date"]::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.dark input[type="date"]::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+

@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { isEagleEyeUIEnabled } from '../lib/featureFlags';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -8,8 +9,18 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const eagleEyeEnabled = isEagleEyeUIEnabled();
 
   const isActive = (path: string) => location.pathname === path;
+
+  // When EagleEye UI is enabled, render a minimal container without the old top nav.
+  // Also guard by route path in case the flag isn't picked up at runtime.
+  const isEagleEyeRoute = /^\/(workspace|approval-bucket|waiting-on|tasks)(\/|$)/.test(
+    location.pathname
+  );
+  if (eagleEyeEnabled || isEagleEyeRoute) {
+    return <div className="min-h-screen bg-slate-100">{children}</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
