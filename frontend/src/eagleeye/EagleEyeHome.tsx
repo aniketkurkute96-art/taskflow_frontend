@@ -1,12 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TasksListView from '../components/tasks/TasksListView';
+import TasksTableView from '../components/tasks/TasksTableView';
 import ColumnsMenu from '../components/tasks/ColumnsMenu';
 import { useProjectStore } from '../stores/projectStore';
 
 const EagleEyeHome = () => {
   const navigate = useNavigate();
   const [showColumnsMenu, setShowColumnsMenu] = useState(false);
+  const [activeView, setActiveView] = useState<'table' | 'list'>(() => {
+    const saved = localStorage.getItem('ee_active_view');
+    return (saved === 'list' || saved === 'table') ? (saved as any) : 'table';
+  });
   const { selectedProjectId, getProjectById } = useProjectStore();
   const selectedProject = selectedProjectId
     ? getProjectById(selectedProjectId)
@@ -33,6 +38,21 @@ const EagleEyeHome = () => {
             </h1>
           </div>
           <div className="flex items-center gap-2">
+            {/* View Tabs */}
+            <div className="mr-3 hidden rounded-md border border-slate-300 p-0.5 text-xs dark:border-slate-600 sm:flex">
+              <button
+                onClick={() => { setActiveView('table'); localStorage.setItem('ee_active_view','table'); }}
+                className={`rounded px-2 py-1 ${activeView === 'table' ? 'bg-indigo-600 text-white' : 'text-slate-600 dark:text-slate-300'}`}
+              >
+                Table
+              </button>
+              <button
+                onClick={() => { setActiveView('list'); localStorage.setItem('ee_active_view','list'); }}
+                className={`rounded px-2 py-1 ${activeView === 'list' ? 'bg-indigo-600 text-white' : 'text-slate-600 dark:text-slate-300'}`}
+              >
+                List
+              </button>
+            </div>
             <button
               onClick={() => setShowColumnsMenu(true)}
               className="flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
@@ -60,7 +80,11 @@ const EagleEyeHome = () => {
 
       {/* Task List */}
       <div className="flex-1 overflow-hidden">
-        <TasksListView showColumnsButton={false} />
+        {activeView === 'table' ? (
+          <TasksTableView />
+        ) : (
+          <TasksListView showColumnsButton={false} />
+        )}
       </div>
     </div>
   );
