@@ -252,13 +252,21 @@ const TaskCreateNew = () => {
       const response = await api.post('/tasks', payload);
       const taskId: string = response.data.id;
 
+      // Upload files sequentially (request queue handles rate limiting)
       if (selectedFiles.length > 0) {
-        for (const file of selectedFiles) {
+        for (let i = 0; i < selectedFiles.length; i++) {
+          const file = selectedFiles[i];
           const attachmentData = new FormData();
           attachmentData.append('file', file);
-          await api.post(`/tasks/${taskId}/attachments`, attachmentData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          });
+          
+          try {
+            await api.post(`/tasks/${taskId}/attachments`, attachmentData, {
+              headers: { 'Content-Type': 'multipart/form-data' },
+            });
+          } catch (uploadError) {
+            console.error(`Failed to upload file ${file.name}:`, uploadError);
+            // Continue with other uploads even if one fails
+          }
         }
       }
 
@@ -269,7 +277,15 @@ const TaskCreateNew = () => {
       navigate(`/tasks/${taskId}`);
     } catch (error: any) {
       console.error('Failed to create task', error);
-      alert(error.response?.data?.error || 'Failed to create task. Please try again.');
+      
+      // Handle specific error cases
+      if (error.response?.status === 429) {
+        alert('Too many requests. The server is busy. Please wait a moment and try again.');
+      } else if (error.message?.includes('Server is busy')) {
+        alert(error.message);
+      } else {
+        alert(error.response?.data?.error || 'Failed to create task. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }

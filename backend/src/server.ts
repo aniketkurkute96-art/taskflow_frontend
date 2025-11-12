@@ -29,11 +29,22 @@ app.use(
   })
 );
 
-// Rate limiting
+// Rate limiting - More generous limits for task management app
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'),
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000'), // 1 minute (reduced window)
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'), // 100 requests per minute
   message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  // Skip rate limiting for successful requests to reduce false positives
+  skipSuccessfulRequests: false,
+  // Add Retry-After header
+  handler: (req, res) => {
+    res.status(429).json({
+      error: 'Too many requests, please slow down.',
+      retryAfter: Math.ceil(parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000') / 1000),
+    });
+  },
 });
 app.use(limiter);
 
