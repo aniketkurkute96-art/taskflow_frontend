@@ -8,6 +8,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const [cooldown, setCooldown] = useState(0);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,6 +31,22 @@ const Login = () => {
         setError('Invalid email or password');
       } else if (err.response?.status === 500) {
         setError('Server error. Database might not be seeded. Check Render logs.');
+      } else if (err.response?.status === 429 || /Server is busy/i.test(err?.message || '')) {
+        // Friendly cooldown UX
+        const retryAfterHeader = err.response?.headers?.['retry-after'];
+        const retryAfter = retryAfterHeader ? parseInt(retryAfterHeader, 10) : 5;
+        setCooldown(retryAfter > 0 ? retryAfter : 5);
+        setError('Server is busy. Please wait a moment and try again.');
+        // Start countdown
+        const timer = setInterval(() => {
+          setCooldown((prev) => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
       } else {
         setError(err.response?.data?.error || err.message || 'Login failed. Check console for details.');
       }
@@ -84,10 +101,10 @@ const Login = () => {
           <div>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || cooldown > 0}
               className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
             >
-              {loading ? 'Signing in...' : 'Sign in'}
+              {loading ? 'Signing in...' : cooldown > 0 ? `Please wait ${cooldown}s` : 'Sign in'}
             </button>
           </div>
           <div className="text-center">
