@@ -57,8 +57,35 @@ const TaskDetail = () => {
   const fetchTimeline = async () => {
     if (!id) return;
     try {
-      const res = await api.get(`/tasks/${id}/timeline`);
-      setTimeline(res.data);
+      const [timelineRes, approversRes] = await Promise.all([
+        api.get(`/tasks/${id}/timeline`),
+        api.get(`/tasks/${id}/approvers`).catch(() => ({ data: [] })),
+      ]);
+
+      const timelineData = timelineRes.data;
+      const approversData = approversRes.data;
+
+      // Enrich timeline items with approval data for approval-related actions
+      const enrichedTimeline = timelineData.map((item: any) => {
+        if (
+          approversData.length > 0 &&
+          (item.action === 'submitted_for_approval' ||
+            item.action === 'approval_workflow_created' ||
+            item.action === 'approved' ||
+            item.action === 'rejected')
+        ) {
+          return {
+            ...item,
+            approvalData: {
+              approvers: approversData,
+              approvalType: task?.approvalType || '360',
+            },
+          };
+        }
+        return item;
+      });
+
+      setTimeline(enrichedTimeline);
     } catch (e) {
       // non-fatal
     }
