@@ -18,7 +18,7 @@ interface ColumnStore {
 }
 
 const DEFAULT_COLUMNS: ColumnConfig[] = [
-  { key: 'title', label: 'Task', visible: true, width: 300, order: 0 },
+  { key: 'title', label: 'Task', visible: true, width: 360, order: 0 },
   { key: 'status', label: 'Status', visible: true, width: 140, order: 1 },
   { key: 'approvalStatus', label: 'Approval Status', visible: true, width: 160, order: 2 },
   { key: 'assignee', label: 'Assignee', visible: true, width: 150, order: 3 },
