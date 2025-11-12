@@ -172,14 +172,14 @@ const TaskEdit = () => {
       subtitle?: string;
       children: React.ReactNode;
     }) => (
-      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
-        <header className="border-b border-slate-100 px-4 py-3 sm:px-6 sm:py-4 dark:border-slate-700">
+      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm backdrop-blur-sm transition-shadow hover:shadow-md dark:border-slate-700 dark:bg-slate-800/60">
+        <header className="border-b border-slate-100 px-4 py-4 sm:px-6 sm:py-5 dark:border-slate-700">
           <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
           {subtitle && (
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
+            <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
           )}
         </header>
-        <div className="px-4 py-4 sm:px-6 sm:py-6">{children}</div>
+        <div className="px-4 py-5 sm:px-6 sm:py-6">{children}</div>
       </section>
     );
 
@@ -214,7 +214,7 @@ const TaskEdit = () => {
               <button
                 type="button"
                 onClick={() => navigate(`/tasks/${id}`)}
-                className="inline-flex items-center rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-all duration-150 hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800"
                 disabled={loading}
               >
                 Cancel
@@ -222,10 +222,20 @@ const TaskEdit = () => {
               <button
                 form="task-edit-form"
                 type="submit"
-                className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition-all duration-150 hover:shadow-lg hover:from-indigo-700 hover:to-violet-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={loading}
               >
-                {loading ? 'Saving…' : 'Save Changes'}
+                {loading ? (
+                  <>
+                    <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Saving…
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
               </button>
             </div>
           </div>
@@ -238,63 +248,79 @@ const TaskEdit = () => {
         >
           <div className="flex min-w-0 flex-1 flex-col gap-6 pb-24 lg:pb-0">
             <SectionCard title="Task Details" subtitle="Update the core information for this task.">
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-                    Title *
+                  <label htmlFor="title" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Title <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
+                    id="title"
                     name="title"
                     value={formData.title}
                     onChange={handleChange}
                     required
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                    maxLength={200}
+                    aria-required="true"
+                    aria-describedby="title-help"
+                    className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition-all duration-150 placeholder:text-slate-400 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-cyan-500"
+                    placeholder="e.g., Review vendor invoice #453"
                   />
+                  <p id="title-help" className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    Give your task a clear, short identity.
+                  </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+                  <label htmlFor="description" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                     Description
                   </label>
                   <textarea
+                    id="description"
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
-                    rows={4}
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                    rows={5}
+                    aria-describedby="description-help"
+                    className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition-all duration-150 placeholder:text-slate-400 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-cyan-500"
+                    placeholder="Share context, goals, and expectations..."
                   />
+                  <p id="description-help" className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    Share context, goals, and expectations. Markdown supported (<strong>bold</strong>, <em>italic</em>, bullet lists).
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+                    <label htmlFor="assigneeId" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                       Assign To
                     </label>
                     <select
+                      id="assigneeId"
                       name="assigneeId"
                       value={formData.assigneeId}
                       onChange={handleChange}
-                      className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                      className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition-all duration-150 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-cyan-500"
                     >
                       <option value="">Select teammate…</option>
                       {filteredAssignees.map((candidate) => (
                         <option key={candidate.id} value={candidate.id}>
-                          {candidate.name} ({candidate.email})
+                          {candidate.name} · {candidate.email}
                         </option>
                       ))}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+                    <label htmlFor="departmentId" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                       Department
                     </label>
                     <select
+                      id="departmentId"
                       name="departmentId"
                       value={formData.departmentId}
                       onChange={(e) => onDepartmentChange(e.target.value)}
-                      className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                      className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition-all duration-150 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-cyan-500"
                     >
                       <option value="">Select department…</option>
                       {departments.map((department) => (
@@ -304,56 +330,80 @@ const TaskEdit = () => {
                       ))}
                     </select>
                   </div>
+                </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-                      Start Date
-                    </label>
-                    <input
-                      type="date"
-                      name="startDate"
-                      value={formData.startDate}
-                      onChange={handleChange}
-                      className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                    />
+                {/* Date Range */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Date Range
+                  </label>
+                  <div className="mt-1.5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="startDate" className="sr-only">Start Date</label>
+                      <input
+                        type="date"
+                        id="startDate"
+                        name="startDate"
+                        value={formData.startDate}
+                        onChange={handleChange}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition-all duration-150 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-cyan-500"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="dueDate" className="sr-only">Due Date</label>
+                      <input
+                        type="date"
+                        id="dueDate"
+                        name="dueDate"
+                        value={formData.dueDate}
+                        onChange={handleChange}
+                        min={formData.startDate || undefined}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition-all duration-150 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-cyan-500"
+                      />
+                    </div>
                   </div>
+                  <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    Start date → Due date. Due date must be after start date.
+                  </p>
+                </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-                      Due Date
-                    </label>
-                    <input
-                      type="date"
-                      name="dueDate"
-                      value={formData.dueDate}
-                      onChange={handleChange}
-                      className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-                      Budget / Amount (optional)
-                    </label>
-                    <input
-                      type="number"
-                      name="amount"
-                      value={formData.amount}
-                      onChange={handleChange}
-                      min={0}
-                      step={0.01}
-                      placeholder="0.00"
-                      className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                    />
-                  </div>
+                {/* Budget */}
+                <div>
+                  <label htmlFor="amount" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Budget / Amount <span className="text-slate-400">(optional)</span>
+                  </label>
+                  <input
+                    type="number"
+                    id="amount"
+                    name="amount"
+                    value={formData.amount}
+                    onChange={handleChange}
+                    min={0}
+                    step={0.01}
+                    placeholder="0.00"
+                    className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition-all duration-150 placeholder:text-slate-400 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-cyan-500"
+                  />
+                  <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    Budget or cost estimate for this task.
+                  </p>
                 </div>
               </div>
             </SectionCard>
 
-            <SectionCard title="Notes">
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                Approval type can’t be changed after creation. Adjust core details and scheduling here.
-              </p>
+            <SectionCard title="Important Notes">
+              <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/50 dark:bg-blue-900/20">
+                <svg className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
+                    Approval type cannot be changed after creation
+                  </p>
+                  <p className="mt-1 text-xs text-blue-700 dark:text-blue-300">
+                    You can adjust task details, assignee, department, dates, and budget. The approval workflow remains unchanged.
+                  </p>
+                </div>
+              </div>
             </SectionCard>
           </div>
 

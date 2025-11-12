@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import ApprovalPreview from './ApprovalPreview';
 
 interface TimelineItem {
   id: string;
@@ -9,6 +10,21 @@ interface TimelineItem {
   oldValue?: string | null;
   newValue?: string | null;
   createdAt: string;
+  approvalData?: {
+    approvers: Array<{
+      id: string;
+      approverUserId: string;
+      levelOrder: number;
+      status: 'pending' | 'approved' | 'rejected';
+      approvedAt?: string | null;
+      approver?: {
+        id: string;
+        name: string;
+        email: string;
+      } | null;
+    }>;
+    approvalType: string;
+  };
 }
 
 interface TimelineProps {
@@ -213,6 +229,13 @@ const Timeline = ({ items }: TimelineProps) => {
                           <span className="font-medium text-green-600">{item.newValue}</span>
                         </div>
                       </div>
+                    )}
+                    {/* Show Approval Preview for approval-related actions */}
+                    {item.approvalData && (item.action === 'submitted_for_approval' || item.action === 'approval_workflow_created' || item.action === 'approved' || item.action === 'rejected') && (
+                      <ApprovalPreview
+                        approvers={item.approvalData.approvers}
+                        approvalType={item.approvalData.approvalType}
+                      />
                     )}
                     <div className="mt-2 flex items-center space-x-2">
                       {item.user && (
