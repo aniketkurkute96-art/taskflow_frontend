@@ -26,20 +26,20 @@ export default function CommentsPanel({
     []
   );
   return (
-    <section className="rounded-2xl border border-slate-700 bg-slate-800/60 p-4 sm:p-6 backdrop-blur-sm">
+    <section className="rounded-2xl border border-slate-700 bg-slate-800/60 p-4 sm:p-6 backdrop-blur-sm shadow-lg dark:shadow-cyan-900/20 transition-all duration-200">
       <header className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-slate-200 leading-none">Comments</h3>
         <div className="ml-auto flex items-center gap-2">{headerExtras}</div>
       </header>
       <div className="mt-3 sm:mt-4 space-y-4">
-        <div className="rounded-lg border border-slate-600 bg-slate-900 p-2.5 sm:p-3">
+        <div className="rounded-lg border border-slate-600 bg-slate-900 p-3">
           <textarea
             aria-label="Add a comment"
             placeholder={placeholder}
             value={commentValue}
             onChange={(e) => onChangeComment(e.target.value)}
             rows={3}
-            className="w-full resize-none bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
+            className="w-full resize-none bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2"
           />
           <div className="mt-2 flex items-center justify-between">
             <div className="text-xs text-slate-500">
@@ -47,14 +47,14 @@ export default function CommentsPanel({
             </div>
             <button
               onClick={() => onSubmit(commentValue)}
-              className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600"
+              className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-400"
             >
               Post
             </button>
           </div>
         </div>
 
-        <ul className="space-y-3 max-h-[60vh] overflow-auto pr-1">
+        <ul className="space-y-3 max-h-[36vh] overflow-auto pr-1">
           {comments.length === 0 && (
             <li className="text-xs text-slate-400">No comments yet</li>
           )}

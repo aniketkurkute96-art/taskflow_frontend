@@ -569,19 +569,23 @@ const TaskDetailNew = () => {
           </SectionCard>
         </div>
 
-        <aside className="col-span-12 md:col-span-4 space-y-4">
-          <div className="sticky top-16">
-            <CommentsPanel
-              taskId={task.id}
-              comments={(timeline.filter(t => t.type === 'comment') as any) || []}
-              commentValue={comment}
-              onChangeComment={setComment}
-              onSubmit={handleAddComment}
-              headerExtras={<Badge variant={task.approvalStatus ?? 'none'} />}
-            />
-          </div>
-          <div>
-            <TimelinePanel items={timeline} />
+        <aside className="col-span-12 md:col-span-4">
+          <div className="relative">
+            <div className="sticky top-20 z-10 space-y-4">
+              <section>
+                <CommentsPanel
+                  taskId={task.id}
+                  comments={(timeline.filter(t => t.type === 'comment') as any) || []}
+                  commentValue={comment}
+                  onChangeComment={setComment}
+                  onSubmit={handleAddComment}
+                  headerExtras={<Badge variant={task.approvalStatus ?? 'none'} />}
+                />
+              </section>
+              <section>
+                <TimelinePanel items={timeline} />
+              </section>
+            </div>
           </div>
         </aside>
       </main>
