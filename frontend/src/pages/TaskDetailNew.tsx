@@ -4,6 +4,10 @@ import { format } from 'date-fns';
 import Timeline from '../components/Timeline';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import Badge from '../components/Badge';
+import ActionButtons from '../components/ActionButtons';
+import CommentsPanel from '../components/CommentsPanel';
+import TimelinePanel from '../components/TimelinePanel';
 
 interface TaskUser {
   id: string;
@@ -67,18 +71,23 @@ interface UserOption {
 const SectionCard = ({
   title,
   subtitle,
+  right,
   children,
 }: {
   title: string;
   subtitle?: string;
+  right?: React.ReactNode;
   children: React.ReactNode;
 }) => (
   <section className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
-    <header className="border-b border-slate-100 px-4 py-3 sm:px-6 sm:py-4 dark:border-slate-700">
-      <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
-      {subtitle && (
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
-      )}
+    <header className="flex items-center justify-between border-b border-slate-100 px-4 py-3 sm:px-6 sm:py-4 dark:border-slate-700">
+      <div>
+        <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
+        {subtitle && (
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
+        )}
+      </div>
+      {right ? <div className="ml-4 flex items-center gap-2">{right}</div> : null}
     </header>
     <div className="px-4 py-4 sm:px-6 sm:py-6">{children}</div>
   </section>
@@ -172,6 +181,7 @@ const TaskDetailNew = () => {
   const [forwardUserId, setForwardUserId] = useState('');
   const [forwardBusy, setForwardBusy] = useState(false);
   const [uploadBusy, setUploadBusy] = useState(false);
+  const [timeline, setTimeline] = useState<TimelineItem[]>([]);
 
   const isMobile = useMemo(() => {
     if (typeof window === 'undefined') return false;
@@ -393,39 +403,28 @@ const TaskDetailNew = () => {
               {task.title}
             </h1>
           </div>
-          <div className="flex items-center gap-2">
-            <span
-              className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                statusBadgeStyles[task.status] || 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300'
-              }`}
-            >
-              {task.status.replace(/_/g, ' ')}
-            </span>
-            <span
-              className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                approvalBadgeStyles[task.approvalStatus ?? 'none'] || approvalBadgeStyles.none
-              }`}
-            >
-              {`Approval: ${(task.approvalStatus ?? 'none').replace(/_/g, ' ')}`}
-            </span>
-            {canEdit && (
-              <button
-                onClick={() => navigate(`/tasks/${id}/edit`)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
-              >
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Edit Task
-              </button>
-            )}
-          </div>
+          <div className="flex items-center gap-2" />
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 overflow-y-auto px-4 py-6 sm:px-6 lg:flex-row">
-        <div className="flex min-w-0 flex-1 flex-col gap-6 pb-24 lg:pb-0">
-          <SectionCard title="Overview">
+      <main className="mx-auto grid w-full max-w-6xl flex-1 grid-cols-12 gap-6 overflow-y-auto px-4 py-6 sm:px-6">
+        <div className="col-span-12 md:col-span-8 flex min-w-0 flex-col gap-6 pb-24 lg:pb-0">
+          <SectionCard
+            title="Overview"
+            right={
+              <div className="flex items-center gap-2">
+                <Badge variant={task.approvalStatus ?? 'none'} />
+                {canEdit && (
+                  <button
+                    onClick={() => navigate(`/tasks/${id}/edit`)}
+                    className="px-3 py-1 rounded-md border border-violet-600 text-violet-200 hover:bg-violet-600/10 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-600"
+                  >
+                    Edit
+                  </button>
+                )}
+              </div>
+            }
+          >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <p className="text-xs uppercase tracking-wide text-slate-400">Owner</p>
@@ -474,36 +473,18 @@ const TaskDetailNew = () => {
             )}
           </SectionCard>
 
-          <SectionCard
-            title="Activity"
-            subtitle="Comments and timeline updates. (Mobile refinement planned.)"
-          >
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,340px)_1fr] lg:items-start">
-              <form onSubmit={handleAddComment} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Add a comment</p>
-                <textarea
-                  value={comment}
-                  onChange={(event) => setComment(event.target.value)}
-                  rows={4}
-                  placeholder="Share progress, ask questions, or mention teammates…"
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                />
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={commentBusy || !comment.trim()}
-                    className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {commentBusy ? 'Posting…' : 'Post Comment'}
-                  </button>
-                </div>
-              </form>
+          <ActionButtons
+            task={task}
+            canApprove={isAdmin}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            onForward={() => setShowForward(true)}
+            onComplete={submitForApproval}
+            onStart={() => updateStatus('in_progress')}
+            onBackToOpen={() => updateStatus('open')}
+          />
 
-              <div className="max-h-[620px] overflow-y-auto pr-1">
-                <Timeline items={timeline} />
-              </div>
-            </div>
-          </SectionCard>
+          {/* Priority & Recurrence remains under overview */}
 
           <SectionCard title="Priority & Recurrence">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -589,48 +570,20 @@ const TaskDetailNew = () => {
           </SectionCard>
         </div>
 
-        <aside className="flex w-full flex-shrink-0 flex-col gap-6 lg:w-80">
-          <SectionCard title="Fast Actions">
-            {availableActions().length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400">No actions available.</p>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {availableActions().map((action) => (
-                  <button
-                    key={action.label}
-                    type="button"
-                    onClick={action.onClick}
-                    className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
-                  >
-                    {action.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </SectionCard>
-
-          <SectionCard title="Metadata">
-            <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
-              <li className="flex justify-between">
-                <span>Created</span>
-                <span className="font-medium text-slate-900 dark:text-slate-100">
-                  {formatDate(task.createdAt, true)}
-                </span>
-              </li>
-              <li className="flex justify-between">
-                <span>Updated</span>
-                <span className="font-medium text-slate-900 dark:text-slate-100">
-                  {formatDate(task.updatedAt, true)}
-                </span>
-              </li>
-              <li className="flex justify-between">
-                <span>Approval Type</span>
-                <span className="font-medium text-slate-900 dark:text-slate-100">
-                  {task.approvalType.replace(/_/g, ' ')}
-                </span>
-              </li>
-            </ul>
-          </SectionCard>
+        <aside className="col-span-12 md:col-span-4 space-y-4">
+          <div className="sticky top-20">
+            <CommentsPanel
+              taskId={task.id}
+              comments={(timeline.filter(t => t.type === 'comment') as any) || []}
+              commentValue={comment}
+              onChangeComment={setComment}
+              onSubmit={handleAddComment}
+              headerExtras={<Badge variant={task.approvalStatus ?? 'none'} />}
+            />
+          </div>
+          <div className="sticky top-[calc(20px+380px)]">
+            <TimelinePanel items={timeline} />
+          </div>
 
           {showForward && (
             <SectionCard title="Forward Task" subtitle="Send this task to another teammate.">
