@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
-import { ChevronDown, CheckCircle2, Loader2 } from 'lucide-react';
 import Timeline from '../components/Timeline';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -136,6 +135,41 @@ const STATUS_OPTIONS = [
 
 const getStatusLabel = (value: string) =>
   STATUS_OPTIONS.find((option) => option.value === value)?.label ?? value;
+
+const ChevronDownIcon = ({ className = '' }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M6 9l6 6 6-6" />
+  </svg>
+);
+
+const CheckCircleIcon = ({ className = '' }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z" />
+    <path d="m9 12.5 2.2 2.2 4.3-4.4" />
+  </svg>
+);
+
+const Spinner = ({ className = '' }: { className?: string }) => (
+  <span
+    className={`inline-block h-4 w-4 animate-spin rounded-full border-2 border-slate-400/70 border-t-transparent ${className}`}
+  />
+);
 
 const formatCurrency = (value?: number | null) => {
   if (value === undefined || value === null) return '—';
@@ -482,9 +516,9 @@ const TaskDetailNew = () => {
                         <span className="text-sm font-semibold leading-tight">{getStatusLabel(task.status)}</span>
                       </div>
                       {statusBusy ? (
-                        <Loader2 className="h-4 w-4 animate-spin opacity-80" />
+                        <Spinner className="opacity-80" />
                       ) : (
-                        <ChevronDown
+                        <ChevronDownIcon
                           className={`h-4 w-4 transition-transform ${statusMenuOpen ? 'rotate-180 opacity-100' : 'opacity-80'}`}
                         />
                       )}
@@ -521,7 +555,7 @@ const TaskDetailNew = () => {
                                       <span className="text-xs text-slate-400">{option.description}</span>
                                     )}
                                   </div>
-                                  {active && <CheckCircle2 className="h-4 w-4 text-cyan-400" />}
+                                  {active && <CheckCircleIcon className="h-4 w-4 text-cyan-400" />}
                                 </button>
                               );
                             })}
