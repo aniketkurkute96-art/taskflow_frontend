@@ -43,14 +43,14 @@ const SectionCard = ({
   subtitle?: string;
   children: React.ReactNode;
 }) => (
-  <section className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
-    <header className="border-b border-slate-100 px-4 py-3 sm:px-6 sm:py-4 dark:border-slate-700">
+  <section className="rounded-2xl border border-slate-200/60 bg-white/95 shadow-sm backdrop-blur-sm transition-shadow duration-200 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800/60">
+    <header className="border-b border-slate-100 px-4 py-3 sm:px-6 sm:py-4 dark:border-slate-700/80">
       <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
       {subtitle && (
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>
       )}
     </header>
-    <div className="px-4 py-4 sm:px-6 sm:py-6">{children}</div>
+    <div className="px-4 py-5 sm:px-6 sm:py-6">{children}</div>
   </section>
 );
 
@@ -293,21 +293,21 @@ const TaskCreateNew = () => {
 
   return (
     <div className="flex h-full flex-col bg-slate-50 dark:bg-slate-900">
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 backdrop-blur-md shadow-sm dark:border-slate-800/80 dark:bg-slate-900/95">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
               Create Task
             </p>
-            <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            <h1 className="mt-0.5 text-xl font-semibold text-slate-900 dark:text-slate-100">
               New Work Item
             </h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="inline-flex items-center rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              className="inline-flex items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-all duration-150 hover:bg-slate-50 hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:border-slate-600"
               disabled={isSubmitting}
             >
               Cancel
@@ -315,10 +315,16 @@ const TaskCreateNew = () => {
             <button
               form="task-create-form"
               type="submit"
-              className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={isSubmitting}
+              className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-indigo-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isSubmitting || !formData.title.trim()}
             >
-              {isSubmitting ? 'Saving…' : 'Create Task'}
+              {isSubmitting && (
+                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+              )}
+              {isSubmitting ? 'Creating…' : 'Create Task'}
             </button>
           </div>
         </div>
@@ -330,47 +336,60 @@ const TaskCreateNew = () => {
         className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 overflow-y-auto px-4 py-6 sm:px-6 lg:flex-row"
       >
         <div className="flex min-w-0 flex-1 flex-col gap-6 pb-24 lg:pb-0">
-          <SectionCard title="Task Details" subtitle="Give your task a clear identity.">
-            <div className="space-y-4">
+          <SectionCard title="Task Details" subtitle="Core information about this work item">
+            <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-                  Title *
+                <label htmlFor="title" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Title <span className="text-rose-500">*</span>
                 </label>
                 <input
+                  id="title"
                   type="text"
                   name="title"
                   value={formData.title}
                   onChange={handleInputChange}
                   required
-                  placeholder="e.g. Review vendor invoice #453"
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                  maxLength={200}
+                  placeholder="e.g., Review vendor invoice #453"
+                  className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 transition-all duration-150 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-cyan-400"
+                  aria-required="true"
+                  aria-describedby="title-help"
                 />
+                <p id="title-help" className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  Give your task a clear, short identity. Max 200 characters.
+                </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+                <label htmlFor="description" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                   Description
                 </label>
                 <textarea
+                  id="description"
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  rows={4}
-                  placeholder="Share context, goals, and expectations"
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                  rows={5}
+                  placeholder="Share context, goals, and expectations. Markdown supported."
+                  className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 transition-all duration-150 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-cyan-400"
+                  aria-describedby="description-help"
                 />
+                <p id="description-help" className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  Add details, background, or requirements. Supports <strong>**bold**</strong> and <em>*italic*</em>.
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+                  <label htmlFor="assigneeId" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                     Assign To
                   </label>
                   <select
+                    id="assigneeId"
                     name="assigneeId"
                     value={formData.assigneeId}
                     onChange={handleInputChange}
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                    className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition-all duration-150 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-cyan-400"
                   >
                     <option value="">Select teammate…</option>
                     {filteredAssignees.length === 0 && formData.departmentId && (
@@ -380,21 +399,22 @@ const TaskCreateNew = () => {
                     )}
                     {filteredAssignees.map((candidate) => (
                       <option key={candidate.id} value={candidate.id}>
-                        {candidate.name} ({candidate.email})
+                        {candidate.name} · {candidate.email}
                       </option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+                  <label htmlFor="departmentId" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                     Department
                   </label>
                   <select
+                    id="departmentId"
                     name="departmentId"
                     value={formData.departmentId}
                     onChange={handleInputChange}
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                    className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition-all duration-150 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-cyan-400"
                   >
                     <option value="">Select department…</option>
                     {departments.map((department) => (
@@ -405,46 +425,64 @@ const TaskCreateNew = () => {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-                    Priority
+                <div className="sm:col-span-2">
+                  <label htmlFor="priorityFlag" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Priority Flag
                   </label>
-                  <select
-                    name="priorityFlag"
-                    value={formData.priorityFlag}
-                    onChange={handleInputChange}
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                  >
+                  <div className="mt-1.5 grid grid-cols-3 gap-2 sm:grid-cols-5">
                     {TASK_FLAGS.map((flag) => (
-                      <option key={flag} value={flag}>
+                      <button
+                        key={flag}
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, priorityFlag: flag }))}
+                        className={`rounded-lg border px-3 py-2 text-xs font-medium capitalize transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 ${
+                          formData.priorityFlag === flag
+                            ? 'border-cyan-500 bg-cyan-50 text-cyan-700 shadow-sm dark:border-cyan-400 dark:bg-cyan-900/30 dark:text-cyan-300'
+                            : 'border-slate-300 bg-white text-slate-600 hover:border-cyan-300 hover:bg-cyan-50/60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-cyan-600'
+                        }`}
+                      >
                         {flag.replace(/_/g, ' ').toLowerCase()}
-                      </option>
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 </div>
 
                 {/* Start and Due in a single row */}
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-                    Start → Due
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Date Range
                   </label>
-                  <div className="mt-1 flex items-center gap-3">
-                    <input
-                      type="date"
-                      name="startDate"
-                      value={formData.startDate}
-                      onChange={handleInputChange}
-                      className="w-40 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                    />
-                    <span className="text-slate-400">→</span>
-                    <input
-                      type="date"
-                      name="dueDate"
-                      value={formData.dueDate}
-                      onChange={handleInputChange}
-                      className="w-40 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                    />
+                  <div className="mt-1.5 flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <div className="flex-1">
+                      <label htmlFor="startDate" className="sr-only">Start Date</label>
+                      <input
+                        id="startDate"
+                        type="date"
+                        name="startDate"
+                        value={formData.startDate}
+                        onChange={handleInputChange}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition-all duration-150 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-cyan-400"
+                        placeholder="Start date"
+                      />
+                    </div>
+                    <span className="hidden text-slate-400 sm:inline-block">→</span>
+                    <div className="flex-1">
+                      <label htmlFor="dueDate" className="sr-only">Due Date</label>
+                      <input
+                        id="dueDate"
+                        type="date"
+                        name="dueDate"
+                        value={formData.dueDate}
+                        onChange={handleInputChange}
+                        min={formData.startDate || undefined}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition-all duration-150 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-cyan-400"
+                        placeholder="Due date"
+                      />
+                    </div>
                   </div>
+                  <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    Optional. Due date must be after start date.
+                  </p>
                 </div>
 
                 {/* Recurrence inline (replaces separate section and budget field) */}
