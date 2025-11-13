@@ -5,7 +5,6 @@ import Signup from '../pages/Signup';
 import { useAuth } from '../contexts/AuthContext';
 import AppShell from '../components/shell/AppShell';
 import EagleEyeHome from './EagleEyeHome';
-import ProjectsSidebar from '../components/sidebar/ProjectsSidebar';
 import ApprovalBucket from '../pages/ApprovalBucket';
 import WaitingOn from '../pages/WaitingOn';
 import TaskDetailNew from '../pages/TaskDetailNew';
@@ -14,6 +13,7 @@ import TaskEdit from '../pages/TaskEdit';
 import AdminPanel from '../pages/AdminPanel';
 import TestLogin from '../pages/TestLogin';
 import ReceptionDashboard from '../pages/Reception/ReceptionDashboard';
+import ChequeCreate from '../pages/Cheques/ChequeCreate';
 
 const PrivateRoute = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated } = useAuth();
@@ -68,6 +68,14 @@ const EagleEyeApp = () => {
             element={
               <RoleRoute roles={['reception', 'admin']}>
                 <ReceptionDashboard />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/cheques/new"
+            element={
+              <RoleRoute roles={['accounts', 'director', 'admin']}>
+                <ChequeCreate />
               </RoleRoute>
             }
           />

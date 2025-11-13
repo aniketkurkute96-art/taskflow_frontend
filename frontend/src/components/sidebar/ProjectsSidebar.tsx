@@ -29,6 +29,18 @@ const ProjectsSidebar = () => {
     });
   }
 
+  if (
+    user?.role === 'accounts' ||
+    user?.role === 'director' ||
+    isAdmin
+  ) {
+    roleLinks.push({
+      path: '/cheques/new',
+      label: 'Create Cheque',
+      icon: '📝',
+    });
+  }
+
   const navigationLinks = [...baseNavigationLinks, ...roleLinks];
 
   const filteredProjects = projects.filter((project) =>
