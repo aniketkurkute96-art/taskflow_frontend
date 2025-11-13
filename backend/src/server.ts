@@ -13,6 +13,7 @@ import departmentRoutes from './routes/departments';
 import taskRoutes from './routes/tasks';
 import approvalTemplateRoutes from './routes/approvalTemplates';
 import dashboardRoutes from './routes/dashboard';
+import documentRoutes from './routes/documents';
 
 // Load environment variables
 dotenv.config();
@@ -72,6 +73,7 @@ app.use('/api/departments', departmentRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/admin/templates', approvalTemplateRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/documents', documentRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

@@ -15,7 +15,7 @@ model User {
   name         String
   email        String       @unique
   password     String       // NOTE: In production, use bcrypt.hash() - currently plaintext for prototype
-  role         String       // 'admin' | 'creator' | 'hod' | 'cfo' | 'assignee'
+  role         String       // 'admin' | 'creator' | 'hod' | 'cfo' | 'assignee' | 'reception' | 'accounts' | 'director'
   departmentId String?
   department   Department?  @relation(fields: [departmentId], references: [id])
   active       Boolean      @default(true)
@@ -30,6 +30,15 @@ model User {
   comments        Comment[]
   attachments     Attachment[]
   checklistItems  ChecklistItem[]
+  
+  // Cheque Management Relations
+  initiatedCheques       Cheque[]           @relation("ChequeInitiator")
+  custodyLogs            CustodyLog[]       @relation("CustodyLogCreator")
+  otpsUsed               Otp[]              @relation("OtpUsedBy")
+  handoverRecords        HandoverRecord[]   @relation("HandoverBy")
+  auditLogs              AuditLog[]         @relation("AuditPerformedBy")
+  requestedOverrides     HandoverOverride[] @relation("OverrideRequestedBy")
+  approvedOverrides      HandoverOverride[] @relation("OverrideApprovedBy")
 
   @@map("users")
 }
@@ -169,5 +178,123 @@ model ChecklistItem {
   updatedAt DateTime @updatedAt
 
   @@map("checklist_items")
+}
+
+// ============================================
+// Cheque Management Models
+// ============================================
+
+model Cheque {
+  id            String    @id @default(uuid())
+  chequeNo      String    @unique
+  amount        Float
+  bank          String
+  branch        String
+  payerName     String
+  payeeName     String
+  dueDate       DateTime
+  status        String    @default("SIGNED") // SIGNED | READY_FOR_DISPATCH | WITH_RECEPTION | ISSUED | CANCELLED
+  initiatorId   String
+  initiator     User      @relation("ChequeInitiator", fields: [initiatorId], references: [id])
+  attachments   String?   // JSON array of file paths
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  custodyLogs      CustodyLog[]
+  otps             Otp[]
+  handoverRecords  HandoverRecord[]
+  auditLogs        AuditLog[]
+
+  @@map("cheques")
+}
+
+model CustodyLog {
+  id                  String    @id @default(uuid())
+  chequeId            String
+  cheque              Cheque    @relation(fields: [chequeId], references: [id], onDelete: Cascade)
+  fromRole            String
+  toRole              String
+  handedAt            DateTime  @default(now())
+  expectedReturnDate  DateTime?
+  actualReturnDate    DateTime?
+  notes               String?
+  createdBy           String
+  createdByUser       User      @relation("CustodyLogCreator", fields: [createdBy], references: [id])
+  attachmentRefs      String?   // JSON array of attachment references
+  createdAt           DateTime  @default(now())
+
+  @@map("custody_logs")
+}
+
+model Otp {
+  id         String    @id @default(uuid())
+  chequeId   String
+  cheque     Cheque    @relation(fields: [chequeId], references: [id], onDelete: Cascade)
+  otpHash    String
+  channel    String    // sms | whatsapp | email
+  toContact  String
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime
+  usedAt     DateTime?
+  usedBy     String?
+  usedByUser User?     @relation("OtpUsedBy", fields: [usedBy], references: [id])
+  attempts   Int       @default(0)
+  status     String    @default("PENDING") // PENDING | USED | EXPIRED | LOCKED
+  ipAddress  String?
+  userAgent  String?
+
+  @@map("otps")
+}
+
+model HandoverRecord {
+  id                  String   @id @default(uuid())
+  chequeId            String
+  cheque              Cheque   @relation(fields: [chequeId], references: [id], onDelete: Cascade)
+  recipientName       String
+  idType              String
+  idNumber            String
+  recipientPhotoPath  String
+  signaturePath       String
+  handedBy            String
+  handedByUser        User     @relation("HandoverBy", fields: [handedBy], references: [id])
+  handedAt            DateTime @default(now())
+  isOverride          Boolean  @default(false)
+  overrideApprovedBy  String?
+  overrideReason      String?
+  createdAt           DateTime @default(now())
+
+  @@map("handover_records")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  chequeId    String?
+  cheque      Cheque?  @relation(fields: [chequeId], references: [id], onDelete: SetNull)
+  action      String   // OTP_GENERATED | OTP_SENT | OTP_VERIFIED | OTP_FAILED | STATUS_CHANGED | etc.
+  userId      String?
+  performedBy User?    @relation("AuditPerformedBy", fields: [userId], references: [id])
+  details     String?  // JSON details
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+model HandoverOverride {
+  id              String    @id @default(uuid())
+  chequeId        String
+  requestedBy     String
+  requestedByUser User      @relation("OverrideRequestedBy", fields: [requestedBy], references: [id])
+  reason          String
+  status          String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  approvedBy      String?
+  approvedByUser  User?     @relation("OverrideApprovedBy", fields: [approvedBy], references: [id])
+  approvedAt      DateTime?
+  rejectedReason  String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("handover_overrides")
 }
 

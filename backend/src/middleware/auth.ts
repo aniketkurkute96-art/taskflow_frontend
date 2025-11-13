@@ -5,6 +5,7 @@ import prisma from '../database';
 export interface AuthRequest extends Request {
   user?: {
     userId: string;
+    id: string; // alias for userId
     email: string;
     role: string;
   };
@@ -37,6 +38,7 @@ export const authenticate = async (
 
     req.user = {
       userId: decoded.userId,
+      id: decoded.userId, // alias for userId
       email: decoded.email,
       role: decoded.role,
     };
@@ -47,7 +49,10 @@ export const authenticate = async (
   }
 };
 
-export const requireRole = (...roles: string[]) => {
+// Alias for authenticate
+export const authenticateToken = authenticate;
+
+export const requireRole = (roles: string[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({ error: 'Authentication required' });
@@ -55,7 +60,11 @@ export const requireRole = (...roles: string[]) => {
     }
 
     if (!roles.includes(req.user.role)) {
-      res.status(403).json({ error: 'Insufficient permissions' });
+      res.status(403).json({ 
+        error: 'Insufficient permissions',
+        required: roles,
+        current: req.user.role,
+      });
       return;
     }
 
