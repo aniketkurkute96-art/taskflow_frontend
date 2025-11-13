@@ -13,6 +13,7 @@ import TaskCreateNew from '../pages/TaskCreateNew';
 import TaskEdit from '../pages/TaskEdit';
 import AdminPanel from '../pages/AdminPanel';
 import TestLogin from '../pages/TestLogin';
+import ReceptionDashboard from '../pages/Reception/ReceptionDashboard';
 
 const PrivateRoute = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated } = useAuth();
@@ -23,6 +24,21 @@ const AdminRoute = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated, user } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" />;
   if (user?.role !== 'admin') return <Navigate to="/workspace" />;
+  return <>{children}</>;
+};
+
+const RoleRoute = ({
+  children,
+  roles,
+}: {
+  children: ReactNode;
+  roles: string[];
+}) => {
+  const { isAuthenticated, user } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" />;
+  if (!user?.role || !roles.includes(user.role)) {
+    return <Navigate to="/workspace" />;
+  }
   return <>{children}</>;
 };
 
@@ -47,6 +63,14 @@ const EagleEyeApp = () => {
           <Route path="/tasks/create" element={<TaskCreateNew />} />
           <Route path="/tasks/:id" element={<TaskDetailNew />} />
           <Route path="/tasks/:id/edit" element={<TaskEdit />} />
+          <Route
+            path="/reception/cheques"
+            element={
+              <RoleRoute roles={['reception', 'admin']}>
+                <ReceptionDashboard />
+              </RoleRoute>
+            }
+          />
           <Route
             path="/admin/users"
             element={

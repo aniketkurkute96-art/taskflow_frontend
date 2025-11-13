@@ -14,12 +14,22 @@ const ProjectsSidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const isAdmin = user?.role === 'admin';
-
-  const navigationLinks = [
+  const baseNavigationLinks = [
     { path: '/workspace', label: 'All Tasks', icon: '📋' },
     { path: '/approval-bucket', label: 'Approval Bucket', icon: '✓' },
     { path: '/waiting-on', label: 'Waiting On', icon: '⏳' },
   ];
+  const roleLinks: { path: string; label: string; icon: string }[] = [];
+
+  if (user?.role === 'reception' || isAdmin) {
+    roleLinks.push({
+      path: '/reception/cheques',
+      label: 'Reception Cheques',
+      icon: '💳',
+    });
+  }
+
+  const navigationLinks = [...baseNavigationLinks, ...roleLinks];
 
   const filteredProjects = projects.filter((project) =>
     project.name.toLowerCase().includes(searchQuery.toLowerCase())
